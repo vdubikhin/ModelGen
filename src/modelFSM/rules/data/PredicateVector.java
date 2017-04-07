@@ -68,7 +68,7 @@ public class PredicateVector extends HashMap<Integer, StateVector> implements Ve
             PredicateVector vectorSmall;
             VectorEquality cmpResult;
             
-            if (flagged) {
+            if (flagged || vectorCmp.flagged) {
                 return VectorEquality.UNIQUE;
             }
             

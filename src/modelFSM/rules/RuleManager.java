@@ -149,8 +149,11 @@ public class RuleManager {
         //Deep copy of curNode
         //RulesNode newNode = new RulesNode(curNode)
         
+        int safeLimit = 0;
+        
         //Detect conflicts for current node
-        while (curNode.detectConflicts()) {
+        while (curNode.detectConflicts() && safeLimit < 50) {
+            System.out.println("Iteration: " + safeLimit++);
             //Determine how to resolve each conflict using one of the managers
             //After conflicts resolved add newNode to curNode children list
             for (Integer vectorId: curNode.conflictSet.keySet()) {
@@ -183,6 +186,9 @@ public class RuleManager {
             for (RuleFSMVector rule: curNode.dataRules)
                 rule.print();
         }
+        
+        if (safeLimit >= 50)
+            System.out.println("Safe limit reached");
         
         return false;
     }

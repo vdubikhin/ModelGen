@@ -97,7 +97,6 @@ public class AnalyzeData {
             double startTime = 0;
             double endTime = 0;
             
-            int predNum = 0;
             int curEventId = 0;
             
             for (OutputDataChunk outputChunk: outputData) {
@@ -107,12 +106,7 @@ public class AnalyzeData {
                 if (prevEvent == null)
                     prevEvent = outEvent;
                 
-                Predicate eventPredicate;
-                
-                if (outputChunk.outputPredicate == null)
-                    eventPredicate = new Predicate(predNum++);
-                else
-                    eventPredicate = outputChunk.outputPredicate;
+                Predicate eventPredicate = outputChunk.outputPredicate;
                 
                 for (int i = curEventId; i < inputData.size(); i++) {
                     Event curEvent = inputData.get(i);
@@ -175,9 +169,39 @@ public class AnalyzeData {
         }
     }
     
-    private void addRawData(List<OutputDataChunk> outputData, RawDataChunk inputData) {
+    private void addRawData(List<OutputDataChunk> outputData, HashMap<String, RawDataChunk> inputData) {
         try {
-            
+            for (String inputName: inputSignalsAnalog.keySet()) {
+                RawDataChunk inputDataFull = inputSignalsAnalog.get(inputName);
+                //TODO: remove all debug messages
+                System.out.println("Input signal: " + inputName);
+                
+                int dataPointId = 0;
+                for (OutputDataChunk outputChunk: outputData) {
+                    RawDataChunk inputDataChunk = new RawDataChunk();
+                    
+                    double startTime = outputChunk.outputEvent.start;
+                    double endTime = outputChunk.outputEvent.end;
+                    
+                    System.out.println("Chunk id: " + outputChunk.outputEvent.eventId 
+                            + " start: " + startTime + " end: " + endTime + "\n");
+                    
+                    for (int i = dataPointId++; i < inputDataFull.size(); i++) {
+                        RawDataPoint dataPoint = inputDataFull.get(i);
+                        
+                        if (dataPoint.time <= endTime) {
+                            if (dataPoint.time >= startTime) {
+                                inputDataChunk.add(dataPoint);
+                                System.out.println("Data point value: " + dataPoint.value +
+                                        " time: " + dataPoint.time);
+                            }
+                        } else
+                            break;
+                    }
+                    System.out.println();
+                    outputChunk.inputRawData.put(inputName, inputDataChunk);
+                }
+            }
         } catch (ArrayIndexOutOfBoundsException e) {
             e.printStackTrace();
         }
@@ -198,9 +222,8 @@ public class AnalyzeData {
             
             orderEventPredicates(chunksList);
             
-            for (String inputName: inputSignalsAnalog.keySet()) {
-                addRawData(chunksList, inputSignalsAnalog.get(inputName));
-            }
+            System.out.println("\nAssigning analog data to signal: " + name);
+            addRawData(chunksList, inputSignalsAnalog);
             
             //TODO: Test what has been added
             System.out.println("\nPrinting predicates for signal: " + name + "\n");
@@ -246,8 +269,9 @@ public class AnalyzeData {
             
             OutputData signal = new OutputData();
             List<Event> events = dataToEvents(name, timeArray, dataArrayGroup);
+            int predNum = 0;
             for (Event event: events) {
-                OutputDataChunk dataChunk = new OutputDataChunk();
+                OutputDataChunk dataChunk = new OutputDataChunk(event, predNum++);
                 dataChunk.outputEvent = event;
                 signal.add(dataChunk);
             }
@@ -316,7 +340,7 @@ public class AnalyzeData {
         String signalNameOut1 = "C";
         String signalNameIn1 = "A";
         String signalNameIn2 = "B";
-        String fileName = "ABC_v5.csv";
+        String fileName = "ABC_a_v1.csv";
         URL url = AnalyzeData.class.getClassLoader().getResource(fileName);
         
         DerivCalc derivCalc = new DerivCalc();
@@ -351,7 +375,9 @@ public class AnalyzeData {
             dataArrayGroup.add(value.intValue());
         }
         
-        analyzeData.addSignal(ControlType.INPUT, signalNameIn2, derivCalc.GetTime(), derivCalc.GetData(signalNameIn2), dataArrayGroup);
+//        analyzeData.addSignal(ControlType.INPUT, signalNameIn2, derivCalc.GetTime(), derivCalc.GetData(signalNameIn2), dataArrayGroup);
+        
+        analyzeData.addSignal(ControlType.INPUT, signalNameIn2, derivCalc.GetTime(), derivCalc.GetData(signalNameIn2));
         
         analyzeData.initDataRules(signalNameOut1);
         analyzeData.analyzeDataRules(signalNameOut1);

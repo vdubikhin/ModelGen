@@ -7,7 +7,10 @@ public class OutputDataChunk {
     public Predicate outputPredicate;
     public HashMap<String, RawDataChunk> inputRawData;
     
-    public OutputDataChunk() {
+    public OutputDataChunk(Event event, Integer id) {
+        this.outputEvent = event;
+        this.outputPredicate = new Predicate(id); 
+        this.inputRawData = new HashMap<String, RawDataChunk>();
     }
 
 }
