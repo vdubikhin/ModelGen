@@ -8,6 +8,7 @@ import java.util.List;
 
 import modelFSM.data.Event;
 import modelFSM.data.OutputDataChunk;
+import modelFSM.data.RawDataChunk;
 import modelFSM.rules.data.PredicateVector;
 import modelFSM.rules.data.StateVector;
 
@@ -16,18 +17,18 @@ class RuleFSMVector implements RuleComparable<PredicateVector, RuleFSMVector>{
     class PredicateVectorExt {
         PredicateVector ruleVector;
         PredicateVector fullRuleVector;
-        
-        //Store raw analog stuff
-        //OutputDataChunk
+        HashMap<String, RawDataChunk> inputRawData;
         
         public PredicateVectorExt(int id) {
             ruleVector = new PredicateVector(id);
             fullRuleVector = new PredicateVector(id);
+            inputRawData = new HashMap<>();
         }
         
         public PredicateVectorExt(PredicateVectorExt copy) {
             ruleVector = new PredicateVector(copy.ruleVector);
             fullRuleVector = new PredicateVector(copy.fullRuleVector);
+            inputRawData = copy.inputRawData;
         }
     }
     
@@ -42,6 +43,7 @@ class RuleFSMVector implements RuleComparable<PredicateVector, RuleFSMVector>{
         for (OutputDataChunk curDataChunk: predicateList) {
             PredicateVectorExt predVectorExt = new PredicateVectorExt(curDataChunk.outputPredicate.getId());
             predVectorExt.fullRuleVector = new PredicateVector(curDataChunk.outputPredicate);
+            predVectorExt.inputRawData = curDataChunk.inputRawData;
             predicateVectorList.put(curDataChunk.outputPredicate.getId(), predVectorExt);
         }
     }
@@ -70,7 +72,6 @@ class RuleFSMVector implements RuleComparable<PredicateVector, RuleFSMVector>{
                     // Reverse order so we print final state last
                     List<Integer> predicateVectorKeysReverse = new ArrayList<Integer>(predicateVector.keySet());
                     Collections.sort(predicateVectorKeysReverse);
-                    Collections.reverse(predicateVectorKeysReverse);
                     
                     String printLine;
                     int predVectorId = predicateVector.getId();
@@ -94,7 +95,7 @@ class RuleFSMVector implements RuleComparable<PredicateVector, RuleFSMVector>{
                     for (Integer key: predicateVectorKeysReverse) {
                         StateVector stateVector = predicateVector.get(key);
                         if (stateVector.containsKey(stateName))
-                            printLine += stateVector.get(stateName).eventId + " ";
+                            printLine += stateVector.get(stateName).eventId + "("+ stateVector.get(stateName).start + ") ";
                     }
                     System.out.println(printLine);
                     stateNum++;
@@ -182,5 +183,10 @@ class RuleFSMVector implements RuleComparable<PredicateVector, RuleFSMVector>{
     @Override
     public PredicateVector getFullRuleVectorById(Integer id) {
         return predicateVectorList.get(id).fullRuleVector;
+    }
+    
+    @Override
+    public HashMap<String, RawDataChunk> getAnalogDataById(Integer id) {
+        return predicateVectorList.get(id).inputRawData;
     }
 }

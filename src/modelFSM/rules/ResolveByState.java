@@ -33,7 +33,7 @@ class ResolveByState< V extends RuleComparable<PredicateVector, V > > implements
                     return false;
                 
                 List<Integer> vectorFullKeys = new ArrayList<Integer>(vectorFull.keySet());
-                Integer stateFullId = Collections.min(vectorFullKeys);
+                Integer stateFullId = Collections.max(vectorFullKeys);
                 stateFull = vectorFull.get(stateFullId);
                 Event outputState = ruleToFix.getOutputState();
                 

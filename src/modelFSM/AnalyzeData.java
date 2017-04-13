@@ -21,6 +21,7 @@ import modelFSM.data.OutputDataChunk;
 import modelFSM.data.RawDataChunk;
 import modelFSM.data.RawDataPoint;
 import modelFSM.rules.RuleManager;
+import modelFSM.shared.Util;
 
 public class AnalyzeData {
     public enum DataType {DMV, CONTINOUS}
@@ -177,17 +178,25 @@ public class AnalyzeData {
                 System.out.println("Input signal: " + inputName);
                 
                 int dataPointId = 0;
-                for (OutputDataChunk outputChunk: outputData) {
+                double startTime = 0;
+                double endTime = 0;
+                for (int i = 0; i < outputData.size(); i++) {
+                    OutputDataChunk outputChunk = outputData.get(i);
                     RawDataChunk inputDataChunk = new RawDataChunk();
+                    if (i == 0) {
+                        startTime = 0;
+                        endTime = outputChunk.outputEvent.end;
+                    } else {
+                        startTime = outputData.get(i - 1).outputEvent.start;
+                        endTime = outputChunk.outputEvent.end;
+                    }
                     
-                    double startTime = outputChunk.outputEvent.start;
-                    double endTime = outputChunk.outputEvent.end;
                     
                     System.out.println("Chunk id: " + outputChunk.outputEvent.eventId 
                             + " start: " + startTime + " end: " + endTime + "\n");
                     
-                    for (int i = dataPointId++; i < inputDataFull.size(); i++) {
-                        RawDataPoint dataPoint = inputDataFull.get(i);
+                    for (int j = dataPointId++; j < inputDataFull.size(); j++) {
+                        RawDataPoint dataPoint = inputDataFull.get(j);
                         
                         if (dataPoint.time <= endTime) {
                             if (dataPoint.time >= startTime) {
@@ -249,7 +258,7 @@ public class AnalyzeData {
         if (type == ControlType.INPUT) {
             //Indicates that input is analog
             if (dataArrayGroup != null) {
-                InputDataDiscrete signal = new InputDataDiscrete(dataToEvents(name, timeArray, dataArrayGroup));
+                InputDataDiscrete signal = new InputDataDiscrete(Util.dataToEvents(name, timeArray, dataArrayGroup));
                 inputSignalsDiscrete.put(name, signal);
             } else {
                 RawDataChunk rawData = new RawDataChunk();
@@ -268,7 +277,7 @@ public class AnalyzeData {
             }
             
             OutputData signal = new OutputData();
-            List<Event> events = dataToEvents(name, timeArray, dataArrayGroup);
+            List<Event> events = Util.dataToEvents(name, timeArray, dataArrayGroup);
             int predNum = 0;
             for (Event event: events) {
                 OutputDataChunk dataChunk = new OutputDataChunk(event, predNum++);
@@ -280,53 +289,7 @@ public class AnalyzeData {
         }
     }
     
-    // TODO: I really need to create a class with common methods and stop copy-pasting
-    private ArrayList<Event> dataToEvents(String name, ArrayList<Double> timeArray, ArrayList<Integer> dataArrayGroup) {
-        // Convert read data to event format
-        // Event - duration pair
-        try {
-            ArrayList<Event> outEvents = new ArrayList<Event>();
-            
-            Double minTime = timeArray.get(0);
-            Double maxTime = timeArray.get(0);
-            
-            int curGroup = dataArrayGroup.get(0);
-            
-            for (int i = 0; i < dataArrayGroup.size(); i++) {
-                if (curGroup != dataArrayGroup.get(i)) {
-                    maxTime = timeArray.get(i-1);
-                    Event tempEvent = new Event();
-                    
-                    //TODO: think on treating 0 group as a special one
-                    // Filtering
-                //    if (curGroup != 0) {
-                        tempEvent.eventId = curGroup;
-                        tempEvent.start = minTime;
-                        tempEvent.end = maxTime;
-                        tempEvent.signalName = name;
-                        outEvents.add(tempEvent);
-                  //  }
-                        
-                    minTime = timeArray.get(i);
-                    curGroup = dataArrayGroup.get(i);
-                }
-            }
-            
-            Event tempEvent = new Event();
-            maxTime = timeArray.get(dataArrayGroup.size()-1);
-            tempEvent.eventId = curGroup;
-            tempEvent.start = minTime;
-            tempEvent.end = maxTime;
-            tempEvent.signalName = name;
-            outEvents.add(tempEvent);
-            
-            return outEvents;
-        } catch (ArrayIndexOutOfBoundsException e) {
-            e.printStackTrace();
-        }
-        
-        return null;
-    }
+
     
     // Add undiscretized(analog) signal
     // TODO: think on how to dynamically discretize analog signals based on values

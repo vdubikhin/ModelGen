@@ -140,8 +140,11 @@ public class RuleManager {
         ConflictResolver<PredicateVector,RuleFSMVector> resolveByState = new ResolveByState<RuleFSMVector>(1);
         conflictResolvers.add(resolveByState);
         
-        ConflictResolver<PredicateVector,RuleFSMVector> resolveByVector = new ResolveByVector<RuleFSMVector>(2);
+        ConflictResolver<PredicateVector,RuleFSMVector> resolveByVector = new ResolveByVector<RuleFSMVector>(5);
         conflictResolvers.add(resolveByVector);
+        
+        ConflictResolver<PredicateVector,RuleFSMVector> resolveByAnalog = new ResolveByAnalog<RuleFSMVector>(2);
+        conflictResolvers.add(resolveByAnalog);
     }
     
     public boolean analyzeData() {

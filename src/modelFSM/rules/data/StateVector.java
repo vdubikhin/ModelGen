@@ -18,6 +18,20 @@ public class StateVector extends HashMap<String, Event> implements VectorCompara
         vectorId = copy.vectorId;
     }
     
+    public Double getStartTime() {
+        Double startTime = null;
+        for (Event event: values()) {
+            if (startTime == null) {
+                startTime = event.start;
+                continue;
+            } else {
+                startTime = Math.max(startTime, event.start);
+            }
+        }
+            
+        return startTime;
+    }
+    
     @Override
     public int getId() {return vectorId;}
     
