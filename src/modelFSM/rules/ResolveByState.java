@@ -44,7 +44,7 @@ class ResolveByState< V extends RuleComparable<PredicateVector, V > > implements
                     
                     StateVector newVector = new StateVector(vectorId);
                     newVector.put(curEvent.signalName, curEvent);
-                    vectorToFix.put(0, newVector);
+                    vectorToFix.put(stateFullId, newVector);
                     return true;
                 }
                 
@@ -53,7 +53,7 @@ class ResolveByState< V extends RuleComparable<PredicateVector, V > > implements
                     if (curEvent.signalName.equals(outputState.signalName)) {
                         StateVector newVector = new StateVector(vectorId);
                         newVector.put(curEvent.signalName, curEvent);
-                        vectorToFix.put(0, newVector);
+                        vectorToFix.put(stateFullId, newVector);
                         return true;
                     }
                 }

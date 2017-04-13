@@ -40,6 +40,7 @@ class ResolveByVector< V extends RuleComparable<PredicateVector, V > > implement
                 vectorFullKeys.add(key);
             
             Collections.sort(vectorFullKeys);
+            Collections.reverse(vectorFullKeys);
             
             //Find first key mismatch and add state vector 
             for (Integer key: vectorFullKeys) {

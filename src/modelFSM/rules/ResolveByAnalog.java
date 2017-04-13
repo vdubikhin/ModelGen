@@ -78,30 +78,36 @@ class ResolveByAnalog< V extends RuleComparable<PredicateVector, V> > implements
                     continue;
                 }
                 
+                Double threshold = null;
+                boolean thresholdFound = false;
+                
                 //Try to reuse existing thresholds first
                 for (int i = 0; i < curThresholds.size(); i++) {
-                    Double threshold = curThresholds.get(i);
+                    threshold = curThresholds.get(i);
                     if (threshold >= chunkMin && threshold <= chunkMax) {
-                        //update predicate vector with descritized analog signal
-                        addAnalogState(vectorToFix, curAnalogChunk, threshold, signal, i);
-                        addAnalogState(vectorFull, curAnalogChunk, threshold, signal, i);
-                        printThresholds();
-                        return true;
+                        thresholdFound = true;
+                        break;
                     }
                 }
                 
                 //Create new threshold
-                Double threshold = (chunkMax - chunkMin)/2 + chunkMin;
-
-                addAnalogState(vectorToFix, curAnalogChunk, threshold, signal, curThresholds.size());
-                addAnalogState(vectorFull, curAnalogChunk, threshold, signal, curThresholds.size());
+                if (!thresholdFound) {
+                    threshold = (chunkMax - chunkMin)/2 + chunkMin;
+                    curThresholds.add(threshold);
+                    Collections.sort(curThresholds);
+                    thresholdValues.put(signal, curThresholds);
+                    
+                    //TODO: debug printing
+                    printThresholds();
+                }
                 
-                curThresholds.add(threshold);
-                Collections.sort(curThresholds);
-                thresholdValues.put(signal, curThresholds);
+                Integer stateId = curThresholds.indexOf(threshold);
                 
-                //TODO: debug printing
-                printThresholds();
+                
+                addAnalogState(vectorToFix, curAnalogChunk, threshold, signal, stateId);
+                addAnalogState(vectorFull, curAnalogChunk, threshold, signal, stateId);
+                
+                
                 return true;
             }
             

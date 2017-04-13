@@ -74,7 +74,7 @@ public class PredicateVector extends HashMap<Integer, StateVector> implements Ve
             
             // TODO: add size check
             
-            if (this.size() > vectorCmp.size() && !this.get(0).isEmpty()) {
+            if (this.size() > vectorCmp.size() && !this.values().iterator().next().isEmpty()) {
                 vectorLarge = this;
                 vectorSmall = vectorCmp;
                 cmpResult = VectorEquality.SUPERSET;
@@ -122,7 +122,7 @@ public class PredicateVector extends HashMap<Integer, StateVector> implements Ve
                 largeVectorIter = i + 1; // TODO: double check i+1
             }
             
-            if (numEq < vectorSmall.size() && !vectorSmall.get(0).isEmpty())
+            if (numEq < vectorSmall.size() && !vectorSmall.values().iterator().next().isEmpty())
                 cmpResult = VectorEquality.UNIQUE;
             
             return cmpResult;
