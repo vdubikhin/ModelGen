@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 
 import modelFSM.data.Event;
-import modelFSM.data.Predicate;
 import modelFSM.data.RawDataChunk;
 import modelFSM.data.RawDataPoint;
 import modelFSM.rules.data.PredicateVector;

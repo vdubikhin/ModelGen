@@ -8,4 +8,9 @@ public class RawDataPoint {
         this.value = value;
         this.time = time;
     }
+    
+    public RawDataPoint(RawDataPoint toCopy) {
+        this.value = toCopy.value;
+        this.time = toCopy.time;
+    }
 }

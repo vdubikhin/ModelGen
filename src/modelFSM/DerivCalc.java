@@ -51,6 +51,7 @@ public class DerivCalc {
         
     }
     
+    // TODO: Replace nested Event class with public Event class
     public static class Event {
         public Integer id;
         public Double start;
@@ -470,6 +471,7 @@ public class DerivCalc {
     
     // TODO: check that columns have equal size
     // TODO: check that rows are equal to header row
+    // TODO: Move to util class. This should be a general purpose method, not specific to deriv calc
     public void ReadFile(String fileName) {
         BufferedReader br = null;
         String line = "";
@@ -525,7 +527,6 @@ public class DerivCalc {
                 }
             }
             
-
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {

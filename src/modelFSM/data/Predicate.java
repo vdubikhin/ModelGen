@@ -1,8 +1,6 @@
 package modelFSM.data;
 
-import java.util.ArrayList;
-
-public class Predicate extends ArrayList<Event> {
+public class Predicate extends ArrayListWrapper<Event> {
     private static final long serialVersionUID = -2414928492298841779L;
     private final int predicateId;
     
