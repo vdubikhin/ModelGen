@@ -1,9 +1,11 @@
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import modelFSM.AnalyzeData;
 import modelFSM.DerivCalc;
 import modelFSM.DiscretizeData;
+import modelFSM.ModelGen;
 import modelFSM.data.ControlType;
 
 
@@ -11,14 +13,27 @@ public class Main2 {
 
     public static void main(String[] args) {
         String groupSuffix = "_group";
-        String signalNameOut1 = "C";
-        String signalNameIn1 = "A";
-        String signalNameIn2 = "B";
-        String fileName = "ABC_a_v1.csv";
+        HashMap<String, ControlType> signals = new HashMap<String, ControlType>();
+
+//        String fileName = "ABC_a_v1.csv";
+//        signals.put("C", ControlType.OUTPUT);
+//        signals.put("A", ControlType.INPUT);
+//        signals.put("B", ControlType.INPUT);
+        
+        signals.put("p_$flow", ControlType.OUTPUT);
+        signals.put("power_in", ControlType.INPUT);
+        signals.put("gp_ack_bus[0]", ControlType.INPUT);
+        String fileName = "buck_simple.csv";
+        
         URL url = Main2.class.getClassLoader().getResource(fileName);
         
-        DiscretizeData discretizeData = new DiscretizeData(url.getPath());
+        ModelGen modelGenerator = new ModelGen(url.getPath());
         
+        for (String signal: signals.keySet()) {
+            modelGenerator.setSignalType(signal, signals.get(signal));
+        }
+
+        modelGenerator.processData();
 //        DerivCalc derivCalc = new DerivCalc();
 //        derivCalc.ReadFile(url.getPath());
 //        derivCalc.CalcDerivSimple();

@@ -15,6 +15,11 @@ public final class Util {
 
     private Util() {};
     
+    static public void debugPrintln(String string, boolean print) {
+        if (print)
+            System.out.println(string);
+    }
+    
     private static final String csvSplitBy = ",";
     static public HashMap<String, RawDataChunk> parseCSVFile(String fileName) {
         BufferedReader br = null;
