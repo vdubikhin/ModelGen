@@ -13,9 +13,9 @@ import modelFSM.data.event.EventInfo;
 import modelFSM.shared.Util;
 
 class DiscretizeDataByStability implements DataDiscretizer {
-    private int MIN_POINTS = 10;
-    private int WINDOW_SIZE = 2;
-    private double VAR_COEFF = 0.05;
+    private int WINDOW_SIZE = 25;
+    private int MIN_POINTS = WINDOW_SIZE*10;
+    private double VAR_COEFF = 0.1;
     private double MEAN_THRESHOLD = 0.01;
     private String DEBUG_SUFFIX = "";
     private boolean DEBUG_PRINT = true;
@@ -27,12 +27,19 @@ class DiscretizeDataByStability implements DataDiscretizer {
         int numPoints;
         
         boolean compareTo(StabilityValues compareTo) {
-            if ( Math.abs( (this.average - compareTo.average)/Math.min(this.average, compareTo.average) ) < VAR_COEFF )
+            if (Math.min(this.average, compareTo.average) < MEAN_THRESHOLD) {
+                if (Math.abs( (this.average - compareTo.average) ) < MEAN_THRESHOLD)
+                    return true;
+                else
+                    return false;
+            }
+            
+            if ( Math.abs( (this.average - compareTo.average)/Math.max(this.average, compareTo.average) ) < VAR_COEFF )
                 return true;
             return false;
         }
         
-        void merge(StabilityValues merge) {
+        void mergeWith(StabilityValues merge) {
             double averageTotal = (this.numPoints * this.average + merge.numPoints * merge.average)/
                                   (this.numPoints + merge.numPoints);
             double durationTotal = this.duration + merge.duration;
@@ -51,7 +58,8 @@ class DiscretizeDataByStability implements DataDiscretizer {
 
     private RawDataChunkGrouped groupedData;
     private ArrayList<StabilityValues> stabilityValues;
-
+    double minStandardDeviation;
+    
     public DiscretizeDataByStability(RawDataChunkGrouped groupedData) {
         this.groupedData = groupedData;
         stabilityValues = new ArrayList<>();
@@ -64,9 +72,10 @@ class DiscretizeDataByStability implements DataDiscretizer {
                 Util.debugPrintln(DEBUG_SUFFIX + "Not enough data points to check signal for DMV via stability.", DEBUG_PRINT);
                 return false;
             }
-
+            
+            minStandardDeviation = -1;
+            double totalTime = groupedData.get(groupedData.size() - 1).time - groupedData.get(0).time;
             ArrayList<StabilityValues> potentialStabilityValues = new ArrayList<>();
-            double minStandardDeviation = -1;
             for (int i = 0; i < groupedData.size(); i = i + WINDOW_SIZE) {
                 //Determine max amount of points to process
                 int max_step = i + WINDOW_SIZE < groupedData.size() ? WINDOW_SIZE : groupedData.size() - i;
@@ -83,7 +92,7 @@ class DiscretizeDataByStability implements DataDiscretizer {
                 //Check if window stability can be calculated via coefficient of variation
                 if (curAverage >= MEAN_THRESHOLD) {
                   //Check that current window is stable
-                    if (Math.abs(standardDeviation/curAverage) < VAR_COEFF) {
+                    if (Math.abs(standardDeviation/curAverage) < VAR_COEFF && stabilityValue.duration/totalTime >= (double) max_step/groupedData.size()) {
                         stabilityValues.add(stabilityValue);
 
                         if (minStandardDeviation >= 0)
@@ -113,8 +122,8 @@ class DiscretizeDataByStability implements DataDiscretizer {
                 stableTime += stabilityValue.duration;
 
             //Assuming time is linear..
-            double totalTime = groupedData.get(groupedData.size() - 1).time - groupedData.get(0).time;
-            Util.debugPrintln(DEBUG_SUFFIX + "stable time: " + stableTime + " total time: " + totalTime, DEBUG_PRINT);
+            Util.debugPrintln(DEBUG_SUFFIX + "stable time: " + stableTime + " total time: " + totalTime + " stability: "
+                              + String.format( "%.2f", stableTime/totalTime*100) + " %", DEBUG_PRINT);
             return stableTime/totalTime >= (1 - VAR_COEFF) ? true : false;
         } catch (ArrayIndexOutOfBoundsException e) {
             e.printStackTrace();
@@ -135,20 +144,39 @@ class DiscretizeDataByStability implements DataDiscretizer {
                 return null;
             }
             
+            Util.debugPrintln(DEBUG_SUFFIX + "Number of averages before merge: " + stabilityValues.size(), DEBUG_PRINT);
+//            for (StabilityValues stabilityValue: stabilityValues)
+//                Util.debugPrintln(DEBUG_SUFFIX + "Average " + stabilityValue.average + " SD: " + stabilityValue.standardDeviation + " Duration: " +
+//                                  stabilityValue.duration, DEBUG_PRINT);
+//            
             //minimize number of stability values by merging averages close to each other.
             ArrayList<StabilityValues> mergedStabilityValues = new ArrayList<>();
-            for (StabilityValues stabilityValue: stabilityValues) {
-                int mergeIndex;
-                boolean merge = false;
-                for (mergeIndex = 0; mergeIndex < mergedStabilityValues.size(); mergeIndex++) {
-                    StabilityValues mergeStabilityValue = mergedStabilityValues.get(mergeIndex);
-                    //Check if relative distance between two sta
-                    if (mergeStabilityValue.compareTo(mergeStabilityValue)) {
-                        
+            boolean merged = true;
+            while (merged) {
+                merged = false;
+                for (StabilityValues stabilityValue: stabilityValues) {
+                    boolean mergePossible = false;
+                    for (StabilityValues mergeStabilityValue: mergedStabilityValues) {
+                        //Check if relative distance between two stable averages is small and merge is possible
+                        if (mergeStabilityValue.compareTo(stabilityValue)) {
+                            mergeStabilityValue.mergeWith(stabilityValue);
+                            mergePossible = true;
+                            merged = true;
+                            break;
+                        }
                     }
+                    
+                    if (!mergePossible)
+                        mergedStabilityValues.add(stabilityValue);
                 }
+                stabilityValues = mergedStabilityValues;
+                mergedStabilityValues = new ArrayList<>();
             }
             
+            Util.debugPrintln(DEBUG_SUFFIX + "Number of averages after merge: " + stabilityValues.size(), DEBUG_PRINT);
+            for (StabilityValues stabilityValue: stabilityValues)
+                Util.debugPrintln(DEBUG_SUFFIX + "Average " + stabilityValue.average + " SD: " + stabilityValue.standardDeviation + " Duration: " +
+                                  stabilityValue.duration, DEBUG_PRINT);
             
         } catch (ArrayIndexOutOfBoundsException e) {
             e.printStackTrace();

@@ -47,11 +47,11 @@ public class ModelGen {
     public boolean setSignalType(String signal, ControlType type) {
         if (rawData.containsKey(signal) || type == null) {
             signalType.put(signal, type);
-            System.out.println("Setting signal: " + signal + "to type: " + type);
+            System.out.println("Setting signal: " + signal + " to type: " + type);
             return true;
         }
         
-        System.out.println("Failed to set signal: " + signal + "to type: " + type);
+        System.out.println("Failed to set signal: " + signal + " to type: " + type);
         return false;
     }
     

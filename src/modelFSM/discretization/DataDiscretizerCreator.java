@@ -10,20 +10,19 @@ public class DataDiscretizerCreator {
     
     public static String[] getDiscretizerTypes() {
         return handlerNames;
-        
     }
     
     public static DataDiscretizer createDataDiscretizer(String name, RawDataChunkGrouped groupedData, ControlType type) {
-        if(name == null){
+        if(name == null) {
             return null;
          }
         
-        if(name.equals("Stability")){
+        if(name.equals("Stability")) {
             return new DiscretizeDataByStability(groupedData);
          }
         
-        if(name.equals("ValueType")){
-            return new DiscretizeDataByValueType(groupedData);
+        if(name.equals("ValueType")) {
+            return new DiscretizeDataByValues(groupedData);
          }
         
         return null;

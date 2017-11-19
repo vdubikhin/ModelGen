@@ -38,7 +38,10 @@ public class DiscretizeData {
                     DataDiscretizer dataHandler = DataDiscretizerCreator.createDataDiscretizer(handlerName, rawData.get(signal), signalType.get(signal));
                     if (dataHandler != null) {
                         //TODO: dataHandler.setParams(HashMap<String, Double> handlerParams);
-                        System.out.println("Signal " + signal + " Handler: " + handlerName + " Can use: " + dataHandler.canDiscretizeData());
+                        if (dataHandler.canDiscretizeData()) {
+                            System.out.println("Signal " + signal + " is discretized by handler: " + handlerName);
+                            dataHandler.discretizeData();
+                        }
                     } else {
                         System.out.println("Signal " + signal + " Handler: " + handlerName + " is not found");
                     }

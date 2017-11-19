@@ -5,11 +5,11 @@ import java.util.List;
 import modelFSM.data.RawDataChunkGrouped;
 import modelFSM.data.event.EventInfo;
 
-class DiscretizeDataByValueType implements DataDiscretizer{
+class DiscretizeDataByValues implements DataDiscretizer{
 
     private RawDataChunkGrouped groupedData;
     
-    public DiscretizeDataByValueType(RawDataChunkGrouped groupedData) {
+    public DiscretizeDataByValues(RawDataChunkGrouped groupedData) {
         this.groupedData = groupedData;
     }
     
