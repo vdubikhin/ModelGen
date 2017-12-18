@@ -12,7 +12,6 @@ public abstract class DataProcessorFactory<T, S> implements IDataProcessorFactor
     final protected String ERROR_PREFIX = "DataProcessorFactory error.";
     final protected String DEBUG_PREFIX = "DataProcessorFactory debug.";
 
-
     protected Map<String, Properties> processorsProperties;
     protected Map<String, Class<? extends IDataProcessor<S>>> processorClasses;
     protected Class<T> inputDataClass;

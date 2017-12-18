@@ -52,8 +52,8 @@ public abstract class State implements IState {
 
             if (mergeStateStart.equals(start) && mergeStateEnd.equals(end))
                 return false;
-            if (mergeStateStart <= start && start <= mergeStateEnd ||
-                mergeStateStart <= end && end <= mergeStateEnd) {
+            if (mergeStateStart.compareTo(start) <= 0 && mergeStateEnd.compareTo(start) >= 0 ||
+                    mergeStateStart.compareTo(end) <= 0 && mergeStateEnd.compareTo(end) >= 0) {
                 return true;
             }
         } catch (NullPointerException e) {
