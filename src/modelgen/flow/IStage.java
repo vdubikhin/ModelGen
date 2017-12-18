@@ -5,18 +5,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import modelgen.data.property.Properties;
+import modelgen.data.property.PropertySettable;
 
-interface IStage<I, O> {
-
-    boolean setStageProperties(Properties properties);
-
-    boolean setManagerProperties(Properties properties);
+public interface IStage<I, O> extends PropertySettable {
 
     boolean setProcessorProperties(Map<String, Properties> properties);
-
-    Properties getStageProperties();
-
-    Properties getManagerProperties();
 
     Map<String, Properties> getProcessorProperties();
 

@@ -1,68 +1,66 @@
 package modelgen.processor;
 
-import java.util.Arrays;
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import modelgen.data.property.Properties;
-import modelgen.shared.Util;
+import modelgen.shared.Logger;
 
-public abstract class DataProcessorFactory<T, S>  implements IDataProcessorFactory<T, S>{
+public abstract class DataProcessorFactory<T, S> implements IDataProcessorFactory<T, S> {
     final protected String ERROR_PREFIX = "DataProcessorFactory error.";
     final protected String DEBUG_PREFIX = "DataProcessorFactory debug.";
 
-    final protected String[] HANDLER_NAMES_ARRAY = {""};
 
-    protected final Set<String> handlerNames;
-    @SuppressWarnings("unused")
-    private Map<String, Properties> processorsProperties;
+    protected Map<String, Properties> processorsProperties;
+    protected Map<String, Class<? extends IDataProcessor<S>>> processorClasses;
+    protected Class<T> inputDataClass;
 
     public DataProcessorFactory() {
-        handlerNames = new HashSet<>(Arrays.asList(HANDLER_NAMES_ARRAY));
+        processorClasses = new HashMap<>();
     }
 
     @Override
     public Set<String> getProcessorNames() {
-        return handlerNames;
+        return processorClasses.keySet();
     }
 
     @Override
     public boolean setProcessorProperties(Map<String, Properties> properties) {
-            try {
-                if (properties == null) {
-                    Util.errorLogger(ERROR_PREFIX + " Input property map not initialized.");
-                    return false;
-                }
+        try {
+            if (properties == null) {
+                Logger.errorLogger(ERROR_PREFIX + " Input property map not initialized.");
+                return false;
+            }
 
-                if (handlerNames == null) {
-                    Util.errorLogger(ERROR_PREFIX + " Data processors names set not initialized.");
-                    return false;
-                }
+            if (processorClasses == null) {
+                Logger.errorLogger(ERROR_PREFIX + " Data processors not initialized.");
+                return false;
+            }
 
-                boolean success = true;
-                //Test properties using empty data processors
-                for (String propertyName: properties.keySet() ) {
-                    if (handlerNames.contains(propertyName)) {
-                        IDataProcessor<S> processor = createEmptyDataProcessor(propertyName);
-                        Properties processorProperties = properties.get(propertyName);
-                        if (!processor.setProcessorProperties(processorProperties)) {
-                            Util.errorLogger(ERROR_PREFIX + " Failure to set properties for processor " + propertyName + ".");
-                            success = false;
-                        }
+            boolean success = true;
+            //Test properties using empty data processors
+            for (String propertyName: properties.keySet() ) {
+                if (processorClasses.containsKey(propertyName)) {
+                    IDataProcessor<S> processor = createEmptyDataProcessor(propertyName);
+                    Properties processorProperties = properties.get(propertyName);
+                    if (!processor.setModuleProperties(processorProperties)) {
+                        Logger.errorLogger(ERROR_PREFIX + " Failure to set properties for processor " + propertyName + ".");
+                        success = false;
                     }
                 }
-
-                if (success) {
-                    processorsProperties = properties;
-                    return true;
-                }
-            } catch (NullPointerException e) {
-                Util.errorLoggerTrace(ERROR_PREFIX + " Null pointer exception.", e);
             }
-            return false;
+
+            if (success) {
+                processorsProperties = properties;
+                return true;
+            }
+        } catch (NullPointerException e) {
+            Logger.errorLoggerTrace(ERROR_PREFIX + " Null pointer exception.", e);
         }
+        return false;
+    }
 
     @Override
     public Map<String, Properties> getProcessorProperties() {
@@ -70,25 +68,51 @@ public abstract class DataProcessorFactory<T, S>  implements IDataProcessorFacto
             //TODO: think if existing processorsProperties should override default
             Map<String, Properties> properties = new HashMap<String, Properties>();
 
-            for (String propertyName: handlerNames) {
-                if (handlerNames.contains(propertyName)) {
-                    IDataProcessor<S> processor = createEmptyDataProcessor(propertyName);
-                    Properties processorProperties = processor.getProcessorProperties();
-                    properties.put(propertyName, processorProperties);
-                }
+            for (String propertyName: processorClasses.keySet()) {
+                IDataProcessor<S> processor = createEmptyDataProcessor(propertyName);
+                Properties processorProperties = processor.getModuleProperties();
+                properties.put(propertyName, processorProperties);
             }
 
             return properties;
         } catch (NullPointerException e) {
-            Util.errorLoggerTrace(ERROR_PREFIX + " Null pointer exception.", e);
+            Logger.errorLoggerTrace(ERROR_PREFIX + " Null pointer exception.", e);
         }
         return null;
     }
 
     private IDataProcessor<S> createEmptyDataProcessor(String name) {
-        return createDataProcessor(name, null);
+        return createGenericDataProcessor(name, null);
     }
 
     @Override
-    abstract public IDataProcessor<S> createDataProcessor(String name, T data);
+    public IDataProcessor<S> createDataProcessor(String name, T data) {
+        if (data != null) {
+            return createGenericDataProcessor(name, data);
+        }
+
+        Logger.errorLogger(ERROR_PREFIX + " Creation of non-initialized data processors is forbidden.");
+        return null;
+    }
+    
+    private IDataProcessor<S> createGenericDataProcessor(String name, T data) {
+        try {
+            if (processorClasses.containsKey(name)) {
+                Class<? extends IDataProcessor<S>> processorClass = processorClasses.get(name);
+                IDataProcessor<S> processor;
+                if (data == null)
+                    processor = processorClass.newInstance();
+                else
+                    processor = processorClass.getConstructor(inputDataClass).newInstance(data);
+                return processor;
+            }
+            Logger.errorLogger(ERROR_PREFIX + " Requested data processor is not found.");
+        } catch (InstantiationException | IllegalAccessException | NoSuchMethodException |
+                 IllegalArgumentException | InvocationTargetException | SecurityException e) {
+            Logger.errorLoggerTrace(ERROR_PREFIX + " Failed to create data processor.", e);
+        } catch (NullPointerException e) {
+            Logger.errorLoggerTrace(ERROR_PREFIX + " Null pointer exception.", e);
+        }
+        return null;
+    }
 }

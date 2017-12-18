@@ -10,7 +10,7 @@ import modelgen.data.state.IState;
 import modelgen.processor.IDataProcessor;
 import modelgen.shared.Util;
 
-class DiscretizeDataByStability implements IDataProcessor<DataOutput> {
+public class DiscretizeDataByStability implements IDataProcessor<DataOutput> {
     private int WINDOW_SIZE = 25;
     private int MIN_POINTS = WINDOW_SIZE*10;
     private double VAR_COEFF = 0.1;

@@ -1,5 +1,5 @@
 package modelgen.data;
 
 public enum DataType {
-    DMV, CONTINOUS;
+    DMV, CONTINOUS_RANGE, CONTINOUS_THRESHOLD;
 }

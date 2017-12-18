@@ -4,12 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import modelgen.data.property.IProperty;
-import modelgen.data.property.Properties;
-import modelgen.data.property.PropertyInteger;
+import modelgen.data.property.*;
 import modelgen.manager.IDataManager;
 import modelgen.processor.IDataProcessorFactory;
-import modelgen.shared.Util;
+import modelgen.shared.Logger;
 
 abstract class Stage<I, O> implements IStage<I, O> {
     final protected String ERROR_PREFIX = "Stage error.";
@@ -23,44 +21,36 @@ abstract class Stage<I, O> implements IStage<I, O> {
     IDataManager<I, O> dataManager;
     IDataProcessorFactory<I, O> processorFactory;
 
-    Properties managerProperties;
-    Map<String, Properties> processorProperties;
-
-    Properties stageProperties;
+    PropertySettable propertyManager;
     PropertyInteger debugPrint;
 
     Stage() {
         debugPrint = new PropertyInteger(PD_DEBUG_PRINT);
         debugPrint.setValue(DEBUG_PRINT_LEVEL);
+
+        Properties moduleProperties = new Properties();
+        moduleProperties.put(debugPrint.getName(), debugPrint);
+
+        propertyManager = new PropertyManager(moduleProperties, DEBUG_PREFIX);
     }
 
-    @Override
-    public boolean setStageProperties(Properties properties) {
-        try {
-            if (properties == null)
-                return false;
-
-            boolean success = true;
-            if (properties.containsKey(PD_DEBUG_PRINT)) {
-                if (IProperty.setProperty(properties.get(PD_DEBUG_PRINT), debugPrint, PropertyInteger.class, ERROR_PREFIX))
-                    Util.debugPrintln(DEBUG_PREFIX + " Setting property " + PD_DEBUG_PRINT, debugPrint.getValue());
-                else
-                    success = false;
-            }
-
-            return success;
-        } catch (NullPointerException e) {
-            Util.errorLoggerTrace(ERROR_PREFIX + " Null pointer exception.", e);
-        }
-        return false;
-    }
+//    Stage(Properties extraProperties) {
+//        debugPrint = new PropertyInteger(PD_DEBUG_PRINT);
+//        debugPrint.setValue(DEBUG_PRINT_LEVEL);
+//
+//        moduleProperties = new Properties();
+//        moduleProperties.put(debugPrint.getName(), debugPrint);
+//        moduleProperties.putAll(extraProperties);
+//
+//        propertyManager = new PropertyManager(moduleProperties, DEBUG_PREFIX);
+//    }
 
     @Override
-    public boolean setManagerProperties(Properties properties) {
+    public boolean setModuleProperties(Properties properties) {
         try {
-            return dataManager.setManagerProperties(properties);
+            return dataManager.setModuleProperties(properties);
         } catch (NullPointerException e) {
-            Util.errorLoggerTrace(ERROR_PREFIX + " Null pointer exception.", e);
+            Logger.errorLoggerTrace(ERROR_PREFIX + " Null pointer exception.", e);
         }
         return false;
     }
@@ -70,22 +60,14 @@ abstract class Stage<I, O> implements IStage<I, O> {
         try {
             return processorFactory.setProcessorProperties(properties);
         } catch (NullPointerException e) {
-            Util.errorLoggerTrace(ERROR_PREFIX + " Null pointer exception.", e);
+            Logger.errorLoggerTrace(ERROR_PREFIX + " Null pointer exception.", e);
         }
         return false;
     }
 
     @Override
-    public Properties getStageProperties() {
-        Properties managerProperties = new Properties();
-        managerProperties.put(PD_DEBUG_PRINT, debugPrint);
-
-        return managerProperties;
-    }
-
-    @Override
-    public Properties getManagerProperties() {
-        return dataManager.getManagerProperties();
+    public Properties getModuleProperties() {
+        return propertyManager.getModuleProperties();
     }
 
     @Override
@@ -96,18 +78,18 @@ abstract class Stage<I, O> implements IStage<I, O> {
     @Override
     public List<Map.Entry<O, Integer>> processData(final List<I> inputData) {
         try {
-            if (inputData == null)  {
-                Util.errorLogger(ERROR_PREFIX + " Input data is not initialized.");
+            if (inputData == null) {
+                Logger.errorLogger(ERROR_PREFIX + " Input data is not initialized.");
                 return null;
             }
 
-            if (processorFactory == null)  {
-                Util.errorLogger(ERROR_PREFIX + " Data processor factory is not initialized.");
+            if (processorFactory == null) {
+                Logger.errorLogger(ERROR_PREFIX + " Data processor factory is not initialized.");
                 return null;
             }
 
-            if (dataManager == null)  {
-                Util.errorLogger(ERROR_PREFIX + " Data manager is not initialized.");
+            if (dataManager == null) {
+                Logger.errorLogger(ERROR_PREFIX + " Data manager is not initialized.");
                 return null;
             }
 
@@ -115,14 +97,14 @@ abstract class Stage<I, O> implements IStage<I, O> {
             for (I data: inputData) {
                 Map.Entry<O, Integer> result = dataManager.processData(data, processorFactory);
                 if (result == null) {
-                    Util.errorLogger(ERROR_PREFIX + " Failed to process data.");
+                    Logger.errorLogger(ERROR_PREFIX + " Failed to process data.");
                     return null;
                 }
                 returnData.add(result);
             }
             return returnData;
         } catch (NullPointerException e) {
-            Util.errorLoggerTrace(ERROR_PREFIX + " Null pointer exception.", e);
+            Logger.errorLoggerTrace(ERROR_PREFIX + " Null pointer exception.", e);
         }
         return null;
     }

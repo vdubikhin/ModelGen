@@ -4,38 +4,18 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-import modelFSM.data.Event;
-import modelFSM.data.RawDataChunk;
-import modelFSM.data.RawDataPoint;
+import modelgen.data.raw.RawDataChunk;
+import modelgen.data.raw.RawDataPoint;
+import modelgen.data.state.IState;
 
 public final class Util {
 
     private Util() {};
-    
-    static public void errorLoggerTrace(String logString, Throwable e) {
-        System.out.println(logString);
-        
-        StringWriter sw = new StringWriter();
-        e.printStackTrace(new PrintWriter(sw));
-        String exceptionAsString = sw.toString();
-        
-        System.out.println(exceptionAsString);
-    }
-    
-    static public void errorLogger(String logString) {
-        System.out.println(logString);
-    }
-    
-    static public void debugPrintln(String string, int printLevel) {
-        if (printLevel > 0)
-            System.out.println(string);
-    }
     
     static public Map<String, RawDataChunk> parseCSVFile(String fileName) {
         BufferedReader br = null;
@@ -56,7 +36,7 @@ public final class Util {
                     
                     // At least 2 columns are expected
                     if (csvHeader.length < 2) {
-                        errorLogger("Failed to parse csv file: " + fileName + ". Insufficient data columns.");
+                        Logger.errorLogger("Failed to parse csv file: " + fileName + ". Insufficient data columns.");
                         return null;
                     }
                     
@@ -68,12 +48,12 @@ public final class Util {
                     String[] rawData = line.split(csvSplitBy);
                     
                     if (rawData.length < 2) {
-                        errorLogger("Failed to parse csv file: " + fileName + ". Insufficient raw data.");
+                        Logger.errorLogger("Failed to parse csv file: " + fileName + ". Insufficient raw data.");
                         return null;
                     }
                     
                     if (rawData.length != csvHeader.length) {
-                        errorLogger("Failed to parse csv file: " + fileName + 
+                        Logger.errorLogger("Failed to parse csv file: " + fileName + 
                                 ". Number of data points not equal to number of columns.");
                         return null;
                     }
@@ -92,17 +72,17 @@ public final class Util {
             
             return csvData;
         } catch (FileNotFoundException e) {
-            errorLoggerTrace("Failed to parse csv file: " + fileName + ". File not found.", e);
+            Logger.errorLoggerTrace("Failed to parse csv file: " + fileName + ". File not found.", e);
         } catch (IOException e) {
-            errorLoggerTrace("Failed to parse csv file: " + fileName + ". File empty.", e);
+            Logger.errorLoggerTrace("Failed to parse csv file: " + fileName + ". File empty.", e);
         } catch(NumberFormatException e) {
-            errorLoggerTrace("Failed to parse csv file: " + fileName + ". Error on data conversion.", e);
+            Logger.errorLoggerTrace("Failed to parse csv file: " + fileName + ". Error on data conversion.", e);
         } finally {
             if (br != null) {
                 try {
                     br.close();
                 } catch (IOException e) {
-                    errorLoggerTrace("Failed to parse csv file: " + fileName + ". Error on closing the file", e);
+                    Logger.errorLoggerTrace("Failed to parse csv file: " + fileName + ". Error on closing the file", e);
                 }
             }
         }
@@ -110,50 +90,54 @@ public final class Util {
         return null;
     }
 
-    static public ArrayList<Event> dataToEvents(String name, ArrayList<Double> timeArray, ArrayList<Integer> dataArrayGroup) {
-        // Convert read data to event format
-        // Event - duration pair
-        try {
-            ArrayList<Event> outEvents = new ArrayList<Event>();
-            
-            Double minTime = timeArray.get(0);
-            Double maxTime = timeArray.get(0);
-            
-            int curGroup = dataArrayGroup.get(0);
-            
-            for (int i = 0; i < dataArrayGroup.size(); i++) {
-                if (curGroup != dataArrayGroup.get(i)) {
-                    maxTime = timeArray.get(i-1);
-                    Event tempEvent = new Event();
-                    
-                    //TODO: think on treating 0 group as a special one
-                    // Filtering
-                //    if (curGroup != 0) {
-                        tempEvent.eventId = curGroup;
-                        tempEvent.start = minTime;
-                        tempEvent.end = maxTime;
-                        tempEvent.signalName = name;
-                        outEvents.add(tempEvent);
-                  //  }
-                        
-                    minTime = timeArray.get(i);
-                    curGroup = dataArrayGroup.get(i);
-                }
-            }
-            
-            Event tempEvent = new Event();
-            maxTime = timeArray.get(dataArrayGroup.size()-1);
-            tempEvent.eventId = curGroup;
-            tempEvent.start = minTime;
-            tempEvent.end = maxTime;
-            tempEvent.signalName = name;
-            outEvents.add(tempEvent);
-            
-            return outEvents;
-        } catch (ArrayIndexOutOfBoundsException e) {
-            e.printStackTrace();
-        }
-        
-        return null;
+    static public boolean groupedDataToStates() {
+        return false;
     }
+
+//    static public ArrayList<Event> dataToEvents(String name, ArrayList<Double> timeArray, ArrayList<Integer> dataArrayGroup) {
+//        // Convert read data to event format
+//        // Event - duration pair
+//        try {
+//            ArrayList<Event> outEvents = new ArrayList<Event>();
+//            
+//            Double minTime = timeArray.get(0);
+//            Double maxTime = timeArray.get(0);
+//            
+//            int curGroup = dataArrayGroup.get(0);
+//            
+//            for (int i = 0; i < dataArrayGroup.size(); i++) {
+//                if (curGroup != dataArrayGroup.get(i)) {
+//                    maxTime = timeArray.get(i-1);
+//                    Event tempEvent = new Event();
+//                    
+//                    //TODO: think on treating 0 group as a special one
+//                    // Filtering
+//                //    if (curGroup != 0) {
+//                        tempEvent.eventId = curGroup;
+//                        tempEvent.start = minTime;
+//                        tempEvent.end = maxTime;
+//                        tempEvent.signalName = name;
+//                        outEvents.add(tempEvent);
+//                  //  }
+//                        
+//                    minTime = timeArray.get(i);
+//                    curGroup = dataArrayGroup.get(i);
+//                }
+//            }
+//            
+//            Event tempEvent = new Event();
+//            maxTime = timeArray.get(dataArrayGroup.size()-1);
+//            tempEvent.eventId = curGroup;
+//            tempEvent.start = minTime;
+//            tempEvent.end = maxTime;
+//            tempEvent.signalName = name;
+//            outEvents.add(tempEvent);
+//            
+//            return outEvents;
+//        } catch (ArrayIndexOutOfBoundsException e) {
+//            e.printStackTrace();
+//        }
+//        
+//        return null;
+//    }
 }

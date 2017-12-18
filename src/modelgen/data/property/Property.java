@@ -1,8 +1,8 @@
 package modelgen.data.property;
 
-import modelgen.shared.Util;
+import modelgen.shared.Logger;
 
-abstract class Property<T> implements IProperty {
+public abstract class Property<T> implements IProperty {
     final protected String ERROR_PREFIX = "Property error.";
     final protected String DEBUG_PREFIX = "Property debug.";
 
@@ -34,14 +34,14 @@ abstract class Property<T> implements IProperty {
                 return true;
             }
         } catch (ClassCastException e) {
-            Util.errorLoggerTrace(ERROR_PREFIX + " Failure to set property value.", e);
+            Logger.errorLoggerTrace(ERROR_PREFIX + " Failure to set property value.", e);
         }
         return false;
     }
     
     protected T assignValue(Object value) throws ClassCastException {
         if (classType == null) {
-            Util.errorLoggerTrace(ERROR_PREFIX + " Class type not set", new Throwable());
+            Logger.errorLoggerTrace(ERROR_PREFIX + " Class type not set", new Throwable());
             return null;
         }
         

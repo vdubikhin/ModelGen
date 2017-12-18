@@ -20,7 +20,7 @@ public class PropertyHashMap<K, V> extends Property<HashMap<K, V>> {
         HashMap<K, V> temp = (HashMap<K, V>) value;
         
         // Check hashmap key types
-        for(K e: temp.keySet()){
+        for(K e: temp.keySet()) {
             if (!e.getClass().equals(keyType)) {
                 throw new ClassCastException("HashMap<" + e.getClass().getSimpleName() +
                         ",?> cannot be cast to HashMap<" + keyType.getSimpleName() + ",?>");

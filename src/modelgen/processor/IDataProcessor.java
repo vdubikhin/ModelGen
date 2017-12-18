@@ -1,12 +1,8 @@
 package modelgen.processor;
 
-import modelgen.data.property.Properties;
+import modelgen.data.property.PropertySettable;
 
-public interface IDataProcessor<T> {
-    boolean setProcessorProperties(Properties properties);
-
-    Properties getProcessorProperties();
-
+public interface IDataProcessor<T> extends PropertySettable {
     String getName();
 
     int processCost();
