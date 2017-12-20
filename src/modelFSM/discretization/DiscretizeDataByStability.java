@@ -9,8 +9,8 @@ import modelFSM.data.RawDataChunk;
 import modelFSM.data.RawDataChunkGrouped;
 import modelFSM.data.RawDataPoint;
 import modelFSM.data.RawDataPointGrouped;
-import modelFSM.data.event.EventInfo;
 import modelFSM.shared.Util;
+import modelgen.data.state.IState;
 
 class DiscretizeDataByStability implements DataDiscretizer {
     private int WINDOW_SIZE = 25;
@@ -76,9 +76,11 @@ class DiscretizeDataByStability implements DataDiscretizer {
             minStandardDeviation = -1;
             double totalTime = groupedData.get(groupedData.size() - 1).time - groupedData.get(0).time;
             ArrayList<StabilityValues> potentialStabilityValues = new ArrayList<>();
+            //TODO: Dynamically  recalculate step size, so every chunk is the same time duration.
             for (int i = 0; i < groupedData.size(); i = i + WINDOW_SIZE) {
                 //Determine max amount of points to process
                 int max_step = i + WINDOW_SIZE < groupedData.size() ? WINDOW_SIZE : groupedData.size() - i;
+                //TODO: change average from points based to duration based.
                 double curAverage = calculateAverage(groupedData, i, max_step);
                 double standardDeviation = calculateStandardDeviation(groupedData, i, max_step, curAverage);
 
@@ -132,7 +134,7 @@ class DiscretizeDataByStability implements DataDiscretizer {
     }
 
     @Override
-    public List<EventInfo> discretizeData() {
+    public List<IState> discretizeData() {
         try {
             if (groupedData.size() < MIN_POINTS) {
                 Util.debugPrintln(DEBUG_SUFFIX + "Not enough data points to check signal for DMV via stability.", DEBUG_PRINT);

@@ -20,15 +20,15 @@ import modelgen.processor.IDataProcessorFactory;
 import modelgen.shared.Logger;
 
 abstract class DataManager<T, S> implements IDataManager<T, S>, PropertySettable {
-    private final String ERROR_PREFIX = "DataManager error.";
-    private final String DEBUG_PREFIX = "DataManager debug.";
+    protected String ERROR_PREFIX = "DataManager: Abstract error.";
+    protected String DEBUG_PREFIX = "DataManager: Abstract debug.";
 
-    private static final String PD_PREFIX = "MS_";
-    protected static final String PD_PROCESSOR_NAMES = PD_PREFIX + "PROCESSOR_NAMES";
-    protected static final String PD_DEBUG_PRINT = PD_PREFIX + "DEBUG_PRINT";
+    private final String PD_PREFIX = "DM_";
+    private final String PD_PROCESSOR_NAMES = PD_PREFIX + "PROCESSOR_NAMES";
+    private final String PD_DEBUG_PRINT = PD_PREFIX + "DEBUG_PRINT";
 
-    protected static final String USE_ALL_PROCESSORS = "Any";
-    protected static final Integer DEBUG_PRINT_LEVEL = 1;
+    private final String USE_ALL_PROCESSORS = "Any";
+    private final Integer DEBUG_PRINT_LEVEL = 1;
 
     PropertySettable propertyManager;
     protected PropertyHashSet<String> processorNames;

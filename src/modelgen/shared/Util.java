@@ -24,6 +24,12 @@ public final class Util {
             String csvSplitBy = ",";
             boolean firstLine = true;
             String[] csvHeader = null;
+            
+            if (fileName == null || fileName.isEmpty()) {
+                Logger.errorLogger("Failed to parse csv file. Empty or missing name.");
+                return null;
+            }
+            
             br = new BufferedReader(new FileReader(fileName));
             Map<String, RawDataChunk> csvData = new HashMap<>();
             while ((line = br.readLine()) != null) {

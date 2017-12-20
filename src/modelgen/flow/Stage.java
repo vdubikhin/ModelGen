@@ -10,11 +10,11 @@ import modelgen.processor.IDataProcessorFactory;
 import modelgen.shared.Logger;
 
 abstract class Stage<I, O> implements IStage<I, O> {
-    final protected String ERROR_PREFIX = "Stage error.";
-    final protected String DEBUG_PREFIX = "Stage debug.";
+    protected String ERROR_PREFIX = "Stage: abstract error.";
+    protected String DEBUG_PREFIX = "Stage: abstract debug.";
 
-    final protected static String PD_PREFIX = "STAGE_";
-    final private static String PD_DEBUG_PRINT = PD_PREFIX + "DEBUG_PRINT";
+    protected String PD_PREFIX = "STAGE_";
+    final private String PD_DEBUG_PRINT = PD_PREFIX + "DEBUG_PRINT";
 
     final private Integer DEBUG_PRINT_LEVEL = 1;
 
@@ -46,13 +46,23 @@ abstract class Stage<I, O> implements IStage<I, O> {
 //    }
 
     @Override
-    public boolean setModuleProperties(Properties properties) {
+    public boolean setManagerProperties(Properties properties) {
         try {
             return dataManager.setModuleProperties(properties);
         } catch (NullPointerException e) {
             Logger.errorLoggerTrace(ERROR_PREFIX + " Null pointer exception.", e);
         }
         return false;
+    }
+
+    @Override
+    public Properties getManagerProperties() {
+        try {
+            return dataManager.getModuleProperties();
+        } catch (NullPointerException e) {
+            Logger.errorLoggerTrace(ERROR_PREFIX + " Null pointer exception.", e);
+        }
+        return null;
     }
 
     @Override
@@ -66,13 +76,23 @@ abstract class Stage<I, O> implements IStage<I, O> {
     }
 
     @Override
-    public Properties getModuleProperties() {
-        return propertyManager.getModuleProperties();
+    public Map<String, Properties> getProcessorProperties() {
+        try {
+            return processorFactory.getProcessorProperties();
+        } catch (NullPointerException e) {
+            Logger.errorLoggerTrace(ERROR_PREFIX + " Null pointer exception.", e);
+        }
+        return null;
     }
 
     @Override
-    public Map<String, Properties> getProcessorProperties() {
-        return processorFactory.getProcessorProperties();
+    public boolean setModuleProperties(Properties properties) {
+        return propertyManager.setModuleProperties(properties);
+    }
+
+    @Override
+    public Properties getModuleProperties() {
+        return propertyManager.getModuleProperties();
     }
 
     @Override

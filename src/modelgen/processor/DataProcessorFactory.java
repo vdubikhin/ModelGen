@@ -94,15 +94,24 @@ public abstract class DataProcessorFactory<T, S> implements IDataProcessorFactor
         return null;
     }
     
-    private IDataProcessor<S> createGenericDataProcessor(String name, T data) {
+    protected IDataProcessor<S> createGenericDataProcessor(String name, T data) {
         try {
             if (processorClasses.containsKey(name)) {
                 Class<? extends IDataProcessor<S>> processorClass = processorClasses.get(name);
                 IDataProcessor<S> processor;
                 if (data == null)
                     processor = processorClass.newInstance();
-                else
+                else {
                     processor = processorClass.getConstructor(inputDataClass).newInstance(data);
+                    //Set settings
+                    if (processorsProperties != null && processorsProperties.containsKey(name)) {
+                        Properties processorProperties = processorsProperties.get(name);
+                        if (!processor.setModuleProperties(processorProperties)) {
+                            Logger.errorLogger(ERROR_PREFIX + " Failed to set properties for processor: " + name + ".");
+                            return null;
+                        }
+                    }
+                }
                 return processor;
             }
             Logger.errorLogger(ERROR_PREFIX + " Requested data processor is not found.");

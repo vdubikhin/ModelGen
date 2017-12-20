@@ -23,28 +23,27 @@ import modelgen.processor.IDataProcessor;
 import modelgen.shared.Logger;
 
 public class DiscretizeDataByValues extends DataProcessor<DataOutput> implements IDataProcessor<DataOutput> {
-    protected final String ERROR_PREFIX = "DiscretizeDataByValues error.";
-    protected final String DEBUG_PREFIX = "DiscretizeDataByValues debug.";
-
-    protected static final String PD_PREFIX = "DiscretizeDataByValues_";
     final private static String PD_VALUE_BASE_COST = PD_PREFIX + "VALUE_BASE_COST";
     final private static String PD_MAX_UNIQUE_VALUES = PD_PREFIX + "MAX_UNIQUE_VALUES";
 
     final private Integer VALUE_BASE_COST = 1;
-    final private Integer MAX_UNIQUE_VALUES = 5;
+    final private Integer MAX_UNIQUE_VALUES = 10;
 
     PropertyInteger valueBaseCost;
     PropertyInteger maxUniqueValues;
 
     private RawDataChunk inputData;
     private ControlType inputType;
-    private Map<Double, Integer> uniqueValues;
     private String inputName;
+    private Map<Double, Integer> uniqueValues;
     
     public DiscretizeDataByValues() {
         this.inputData = null;
         
         name = "ValueType";
+
+        ERROR_PREFIX = "DataProcessor: DiscretizeDataByValues error.";
+        DEBUG_PREFIX = "DataProcessor: DiscretizeDataByValues debug.";
         
         valueBaseCost = new PropertyInteger(PD_VALUE_BASE_COST);
         valueBaseCost.setValue(VALUE_BASE_COST);
@@ -61,9 +60,9 @@ public class DiscretizeDataByValues extends DataProcessor<DataOutput> implements
 
     public DiscretizeDataByValues(DataInput inputData) {
         this();
-        this.inputData = inputData.data;
-        this.inputType = inputData.type;
-        this.inputName = inputData.name;
+        this.inputData = inputData.getData();
+        this.inputType = inputData.getType();
+        this.inputName = inputData.getName();
     }
 
     @Override
@@ -137,13 +136,9 @@ public class DiscretizeDataByValues extends DataProcessor<DataOutput> implements
                 groupedData.add(groupedPoint);
             }
 
-            outputStates = Mergeable.mergeEntries(outputStates);
+            Mergeable.mergeEntries(outputStates);
 
-            DataOutput result = new DataOutput();
-            result.dataType = inputType;
-            result.data = groupedData;
-            result.states = outputStates;
-            result.name = inputName;
+            DataOutput result = new DataOutput(groupedData, inputName, inputType, outputStates);
 
             return result;
         } catch (NullPointerException e) {

@@ -1,13 +1,14 @@
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import modelFSM.AnalyzeData;
 import modelFSM.DerivCalc;
 import modelFSM.DiscretizeData;
 import modelFSM.ModelGen;
 import modelFSM.data.ControlType;
-
+import modelgen.data.property.*;
 
 public class Main3 {
 
@@ -27,13 +28,50 @@ public class Main3 {
         
         URL url = Main3.class.getClassLoader().getResource(fileName);
         
-        ModelGen modelGenerator = new ModelGen(url.getPath());
+//        ModelGen modelGenerator = new ModelGen(url.getPath());
+//        
+//        for (String signal: signals.keySet()) {
+//            modelGenerator.setSignalType(signal, signals.get(signal));
+//        }
+//
+//        modelGenerator.processData();
         
-        for (String signal: signals.keySet()) {
-            modelGenerator.setSignalType(signal, signals.get(signal));
-        }
+        
+        Property<ArrayList<String>> processorNames = new PropertyArrayList<String>("test property", String.class);
+        processorNames.setValue(new ArrayList<String>());
+        
+        Property<Double> processorValue = new PropertyDouble("test property2");
+        processorValue.setValue(new Double(4));
+        
+        Properties properties = new Properties();
+        properties.put("test", processorNames);
+        properties.put("test2", processorValue);
+        
+        for (IProperty p: properties.values())
+            System.out.println(p.getName() + " " + p.getValue());
+        
+//        processorValue.setValue(processorNames.getValue());
+        
+        Object t1 = new Double(0);
+        Object t2 = new ArrayList<Integer>();
+        Object t3 = new ArrayList<String>();
+        System.out.println(t1);
+        
+        Double temp = processorValue.getValue();
+        ((ArrayList)t2).add(1);
+        System.out.println(t2);
+     //   t1 =  processorNames.getValue();
+        System.out.println(t1);
+        processorValue.setValue(t1);
+        
+        processorNames.setValue(t3);
+        processorNames.setValue(t2);
+        
+        for (IProperty p: properties.values())
+            System.out.println(p.getName() + " " + p.getValue());
+        
 
-        modelGenerator.processData();
+
 //        DerivCalc derivCalc = new DerivCalc();
 //        derivCalc.ReadFile(url.getPath());
 //        derivCalc.CalcDerivSimple();

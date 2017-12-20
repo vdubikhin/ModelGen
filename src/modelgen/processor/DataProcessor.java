@@ -6,12 +6,12 @@ import modelgen.data.property.PropertyManager;
 import modelgen.data.property.PropertySettable;
 
 public abstract class DataProcessor<S> implements IDataProcessor<S> {
-    protected final String ERROR_PREFIX = "DataProcessor error.";
-    protected final String DEBUG_PREFIX = "DataProcessor debug.";
+    protected String ERROR_PREFIX = "DataProcessor: Abstract error.";
+    protected String DEBUG_PREFIX = "DataProcessor: Abstract debug.";
     
     protected String name = "AbstractType";
     
-    protected static final String PD_PREFIX = "DataProcessor_";
+    protected static final String PD_PREFIX = "DP_";
     protected static final String PD_DEBUG_PRINT = PD_PREFIX + "DEBUG_PRINT";
     
     protected final Integer DEBUG_PRINT_LEVEL = 1;

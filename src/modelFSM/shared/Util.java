@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 import modelFSM.data.Event;
 import modelFSM.data.RawDataChunk;
@@ -21,7 +22,7 @@ public final class Util {
     }
     
     private static final String csvSplitBy = ",";
-    static public HashMap<String, RawDataChunk> parseCSVFile(String fileName) {
+    static public Map<String, RawDataChunk> parseCSVFile(String fileName) {
         BufferedReader br = null;
         String line = "";
 
@@ -29,7 +30,7 @@ public final class Util {
             boolean firstLine = true;
             String[] csvHeader = null;
             br = new BufferedReader(new FileReader(fileName));
-            HashMap<String, RawDataChunk> csvData = new HashMap<>();
+            Map<String, RawDataChunk> csvData = new HashMap<>();
             while ((line = br.readLine()) != null) {
                 line = line.trim();
                 if (line.isEmpty())

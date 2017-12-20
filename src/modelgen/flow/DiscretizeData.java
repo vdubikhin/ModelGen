@@ -9,5 +9,9 @@ public class DiscretizeData extends Stage<DataInput, DataOutput> implements ISta
     public DiscretizeData() {
         dataManager = new ManagerLowCost<DataInput, DataOutput>();
         processorFactory = new DiscretizerFactory();
+
+        ERROR_PREFIX = "Stage: DiscretizeData error.";
+        DEBUG_PREFIX = "Stage: DiscretizeData debug.";
+        PD_PREFIX    = "DiscretizeData_";
     }
 }

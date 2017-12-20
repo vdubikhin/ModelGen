@@ -17,46 +17,45 @@ public class Main2 {
         String fileName = "ABC_a_v1.csv";
         URL url = Main2.class.getClassLoader().getResource(fileName);
         
-        DiscretizeData discretizeData = new DiscretizeData(url.getPath());
         
-//        DerivCalc derivCalc = new DerivCalc();
-//        derivCalc.ReadFile(url.getPath());
-//        derivCalc.CalcDerivSimple();
-//        derivCalc.GroupDataSimple();
-//        
-//        AnalyzeData analyzeData = new AnalyzeData();
-//        
-//        ArrayList<Double> dataArrayGroupDouble = derivCalc.GetData(signalNameOut1 + groupSuffix);
-//        ArrayList<Integer> dataArrayGroup = new ArrayList<Integer>();
-//        
-//        for (Double value: dataArrayGroupDouble) {
-//            dataArrayGroup.add(value.intValue());
-//        }
-//        
-//        analyzeData.addSignal(ControlType.OUTPUT, signalNameOut1, derivCalc.GetTime(), derivCalc.GetData(signalNameOut1), dataArrayGroup);
-//        
-//        dataArrayGroupDouble = derivCalc.GetData(signalNameIn1 + groupSuffix);
-//        dataArrayGroup = new ArrayList<Integer>();
-//        
-//        for (Double value: dataArrayGroupDouble) {
-//            dataArrayGroup.add(value.intValue());
-//        }
-//        
-//        analyzeData.addSignal(ControlType.INPUT, signalNameIn1, derivCalc.GetTime(), derivCalc.GetData(signalNameIn1), dataArrayGroup);
-//        
-//        dataArrayGroupDouble = derivCalc.GetData(signalNameIn2 + groupSuffix);
-//        dataArrayGroup = new ArrayList<Integer>();
-//        
-//        for (Double value: dataArrayGroupDouble) {
-//            dataArrayGroup.add(value.intValue());
-//        }
-//        
-////        analyzeData.addSignal(ControlType.INPUT, signalNameIn2, derivCalc.GetTime(), derivCalc.GetData(signalNameIn2), dataArrayGroup);
-//        
-//        analyzeData.addSignal(ControlType.INPUT, signalNameIn2, derivCalc.GetTime(), derivCalc.GetData(signalNameIn2));
-//        
-//        analyzeData.initDataRules(signalNameOut1);
-//        analyzeData.analyzeDataRules(signalNameOut1);
+        DerivCalc derivCalc = new DerivCalc();
+        derivCalc.ReadFile(url.getPath());
+        derivCalc.CalcDerivSimple();
+        derivCalc.GroupDataSimple();
+        
+        AnalyzeData analyzeData = new AnalyzeData();
+        
+        ArrayList<Double> dataArrayGroupDouble = derivCalc.GetData(signalNameOut1 + groupSuffix);
+        ArrayList<Integer> dataArrayGroup = new ArrayList<Integer>();
+        
+        for (Double value: dataArrayGroupDouble) {
+            dataArrayGroup.add(value.intValue());
+        }
+        
+        analyzeData.addSignal(ControlType.OUTPUT, signalNameOut1, derivCalc.GetTime(), derivCalc.GetData(signalNameOut1), dataArrayGroup);
+        
+        dataArrayGroupDouble = derivCalc.GetData(signalNameIn1 + groupSuffix);
+        dataArrayGroup = new ArrayList<Integer>();
+        
+        for (Double value: dataArrayGroupDouble) {
+            dataArrayGroup.add(value.intValue());
+        }
+        
+        analyzeData.addSignal(ControlType.INPUT, signalNameIn1, derivCalc.GetTime(), derivCalc.GetData(signalNameIn1), dataArrayGroup);
+        
+        dataArrayGroupDouble = derivCalc.GetData(signalNameIn2 + groupSuffix);
+        dataArrayGroup = new ArrayList<Integer>();
+        
+        for (Double value: dataArrayGroupDouble) {
+            dataArrayGroup.add(value.intValue());
+        }
+        
+//        analyzeData.addSignal(ControlType.INPUT, signalNameIn2, derivCalc.GetTime(), derivCalc.GetData(signalNameIn2), dataArrayGroup);
+        
+        analyzeData.addSignal(ControlType.INPUT, signalNameIn2, derivCalc.GetTime(), derivCalc.GetData(signalNameIn2));
+        
+        analyzeData.initDataRules(signalNameOut1);
+        analyzeData.analyzeDataRules(signalNameOut1);
         
 //        System.out.println("DetectRuleCSC: " + analyzeData.detectRuleCSC(signalNameOut1));
 //        System.out.println("ResolveCSC: " + analyzeData.resolveCSC(signalNameOut1));

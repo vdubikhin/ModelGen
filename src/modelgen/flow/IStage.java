@@ -11,7 +11,11 @@ public interface IStage<I, O> extends PropertySettable {
 
     boolean setProcessorProperties(Map<String, Properties> properties);
 
+    boolean setManagerProperties(Properties properties);
+
     Map<String, Properties> getProcessorProperties();
+
+    Properties getManagerProperties();
 
     List<Entry<O, Integer>> processData(List<I> inputData);
 }

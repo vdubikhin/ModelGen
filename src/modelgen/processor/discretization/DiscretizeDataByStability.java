@@ -1,30 +1,33 @@
 package modelgen.processor.discretization;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
+import modelgen.data.ControlType;
+import modelgen.data.complex.Mergeable;
 import modelgen.data.property.Properties;
+import modelgen.data.property.PropertyDouble;
+import modelgen.data.property.PropertyInteger;
+import modelgen.data.property.PropertyManager;
+import modelgen.data.raw.RawDataChunk;
 import modelgen.data.raw.RawDataChunkGrouped;
+import modelgen.data.raw.RawDataPoint;
+import modelgen.data.raw.RawDataPointGrouped;
 import modelgen.data.state.IState;
+import modelgen.data.state.StateDMV;
+import modelgen.processor.DataProcessor;
 import modelgen.processor.IDataProcessor;
-import modelgen.shared.Util;
+import modelgen.shared.Logger;
 
-public class DiscretizeDataByStability implements IDataProcessor<DataOutput> {
-    private int WINDOW_SIZE = 25;
-    private int MIN_POINTS = WINDOW_SIZE*10;
-    private double VAR_COEFF = 0.1;
-    private double MEAN_THRESHOLD = 0.01;
-    private String DEBUG_SUFFIX = "";
-    private boolean DEBUG_PRINT = true;
-    
-    private class StabilityValues {
+public class DiscretizeDataByStability extends DataProcessor<DataOutput> implements IDataProcessor<DataOutput> {
+    private class StabilityValues implements Mergeable<StabilityValues> {
         double average;
         double duration;
         double standardDeviation;
         int numPoints;
-        
-        boolean compareTo(StabilityValues compareTo) {
+
+        @Override
+        public boolean canMergeWith(StabilityValues compareTo) {
             if (Math.min(this.average, compareTo.average) < MEAN_THRESHOLD) {
                 if (Math.abs( (this.average - compareTo.average) ) < MEAN_THRESHOLD)
                     return true;
@@ -36,62 +39,149 @@ public class DiscretizeDataByStability implements IDataProcessor<DataOutput> {
                 return true;
             return false;
         }
-        
-        void mergeWith(StabilityValues merge) {
+
+        @Override
+        public boolean mergeWith(StabilityValues merge) {
+            if (!canMergeWith(merge))
+                return false;
+
             double averageTotal = (this.numPoints * this.average + merge.numPoints * merge.average)/
                                   (this.numPoints + merge.numPoints);
+
+
             double durationTotal = this.duration + merge.duration;
             int numPointsTotal = this.numPoints + merge.numPoints;
+
+
             double standardDeviationTotal = Math.sqrt( (this.numPoints * Math.pow(this.standardDeviation, 2) +
                                                         merge.numPoints * Math.pow(merge.standardDeviation, 2) +
                                                         this.numPoints * Math.pow(this.average - averageTotal, 2) + 
                                                         merge.numPoints * Math.pow(merge.average - averageTotal, 2))/numPointsTotal );
-            
+
             this.average = averageTotal;
             this.duration = durationTotal;
             this.standardDeviation = standardDeviationTotal;
             this.numPoints = numPointsTotal;
+
+            return true;
         }
     }
 
-    private RawDataChunkGrouped groupedData;
+    final private static String PD_WINDOW_SIZE = PD_PREFIX + "WINDOW_SIZE";
+    final private static String PD_MIN_POINTS = PD_PREFIX + "MIN_POINTS";
+    final private static String PD_VAR_COEFF = PD_PREFIX + "VAR_COEFF";
+    final private static String PD_MEAN_THRESHOLD = PD_PREFIX + "MEAN_THRESHOLD";
+    final private static String PD_VALUE_BASE_COST = PD_PREFIX + "VALUE_BASE_COST";
+    final private static String PD_MAX_UNIQUE_VALUES = PD_PREFIX + "MAX_UNIQUE_VALUES";
+
+    final private Integer VALUE_BASE_COST = 2;
+    final private Integer MAX_UNIQUE_STATES = 10;
+    final private int WINDOW_SIZE = 10;
+    final private int MIN_POINTS = WINDOW_SIZE*10;
+    final private double VAR_COEFF = 0.25;
+    final private double MEAN_THRESHOLD = 0.1;
+
+    private RawDataChunk inputData;
+    private ControlType inputType;
+    private String inputName;
+
     private ArrayList<StabilityValues> stabilityValues;
+    double stableTime, totalTime;
     double minStandardDeviation;
+
+    PropertyInteger valueBaseCost;
+    PropertyInteger maxUniqueStates;
+    PropertyInteger windowSize;
+    PropertyInteger minPoints;
+    PropertyDouble varCoefficient;
+    PropertyDouble meanThreshold;
+
+    public DiscretizeDataByStability() {
+        ERROR_PREFIX = "DataProcessor: DiscretizeDataByStability error. ";
+        DEBUG_PREFIX = "DataProcessor: DiscretizeDataByStability debug. ";
+
+        stableTime = -1;
+        totalTime = -1;
+
+        name = "Stability";
+
+        valueBaseCost = new PropertyInteger(PD_VALUE_BASE_COST);
+        valueBaseCost.setValue(VALUE_BASE_COST);
+
+        maxUniqueStates = new PropertyInteger(PD_MAX_UNIQUE_VALUES);
+        maxUniqueStates.setValue(MAX_UNIQUE_STATES);
+
+        windowSize = new PropertyInteger(PD_WINDOW_SIZE);
+        windowSize.setValue(WINDOW_SIZE);
+        
+        minPoints = new PropertyInteger(PD_MIN_POINTS);
+        minPoints.setValue(MIN_POINTS);
+        
+        varCoefficient = new PropertyDouble(PD_VAR_COEFF);
+        varCoefficient.setValue(VAR_COEFF);
+        
+        meanThreshold = new PropertyDouble(PD_MEAN_THRESHOLD);
+        meanThreshold.setValue(MEAN_THRESHOLD);
+
+        Properties moduleProperties = propertyManager.getModuleProperties();
+        moduleProperties.put(valueBaseCost.getName(), valueBaseCost);
+        moduleProperties.put(maxUniqueStates.getName(), maxUniqueStates);
+
+        propertyManager = new PropertyManager(moduleProperties, DEBUG_PREFIX);
+    }
     
-    public DiscretizeDataByStability(RawDataChunkGrouped groupedData) {
-        this.groupedData = groupedData;
-        stabilityValues = new ArrayList<>();
+    public DiscretizeDataByStability(DataInput inputData) {
+        this();
+        this.inputData = inputData.getData();
+        this.inputType = inputData.getType();
+        this.inputName = inputData.getName();
     }
 
-    public boolean canDiscretizeData() {
+    @Override
+    public int processCost() {
         try {
-            if (groupedData.size() < MIN_POINTS) {
-                Util.debugPrintln(DEBUG_SUFFIX + "Not enough data points to check signal for DMV via stability.", DEBUG_PRINT);
-                return false;
+            if (stabilityValues != null)
+                return costFunction();
+
+            if (inputData == null)
+                return -1;
+
+            if (inputData.size() < minPoints.getValue()) {
+                Logger.errorLogger(DEBUG_PREFIX + "Not enough data points to check signal for DMV via stability.");
+                return -1;
             }
-            
+
+            totalTime = inputData.get(inputData.size() - 1).time - inputData.get(0).time;
+            if (totalTime <= 0) {
+                Logger.errorLogger(DEBUG_PREFIX + "Total waveform time is less than zero.");
+                return -1;
+            }
+
+            stabilityValues = new ArrayList<>();
             minStandardDeviation = -1;
-            double totalTime = groupedData.get(groupedData.size() - 1).time - groupedData.get(0).time;
+
             ArrayList<StabilityValues> potentialStabilityValues = new ArrayList<>();
             //TODO: Dynamically  recalculate step size, so every chunk is the same time duration.
-            for (int i = 0; i < groupedData.size(); i = i + WINDOW_SIZE) {
+            for (int i = 0; i < inputData.size(); i = i + windowSize.getValue()) {
                 //Determine max amount of points to process
-                int max_step = i + WINDOW_SIZE < groupedData.size() ? WINDOW_SIZE : groupedData.size() - i;
+                int max_step = i + windowSize.getValue() < inputData.size() ? windowSize.getValue() :
+                                                                              inputData.size() - i;
                 //TODO: change average from points based to duration based.
-                double curAverage = calculateAverage(groupedData, i, max_step);
-                double standardDeviation = calculateStandardDeviation(groupedData, i, max_step, curAverage);
+                double curAverage = calculateAverage(inputData, i, max_step);
+                double standardDeviation = calculateStandardDeviation(inputData, i, max_step, curAverage);
 
                 StabilityValues stabilityValue = new StabilityValues();
                 stabilityValue.average = curAverage;
-                stabilityValue.duration = groupedData.get(Math.min(max_step + i, groupedData.size() - 1)).time
-                                        - groupedData.get(i).time;
+                stabilityValue.duration = inputData.get(Math.min(max_step + i, inputData.size() - 1)).time
+                                        - inputData.get(i).time;
                 stabilityValue.numPoints = max_step;
                 stabilityValue.standardDeviation = standardDeviation;
                 
                 //Check if window stability can be calculated via coefficient of variation
-                if (curAverage >= MEAN_THRESHOLD) {
+                if (curAverage >= meanThreshold.getValue()) {
                   //Check that current window is stable
-                    if (Math.abs(standardDeviation/curAverage) < VAR_COEFF && stabilityValue.duration/totalTime >= (double) max_step/groupedData.size()) {
+                    if (Math.abs(standardDeviation/curAverage) < varCoefficient.getValue() &&
+                        stabilityValue.duration/totalTime >= (double) max_step/inputData.size()) {
                         stabilityValues.add(stabilityValue);
 
                         if (minStandardDeviation >= 0)
@@ -116,130 +206,127 @@ public class DiscretizeDataByStability implements IDataProcessor<DataOutput> {
                 }
             }
 
-            double stableTime = 0;
-            for (StabilityValues stabilityValue: stabilityValues)
+            Logger.debugPrintln(DEBUG_PREFIX + "Number of averages before merge: " + stabilityValues.size(),
+                                debugPrint.getValue());
+            Mergeable.mergeEntries(stabilityValues);
+            Logger.debugPrintln(DEBUG_PREFIX + "Number of averages after merge: " + stabilityValues.size(),
+                                debugPrint.getValue());
+            
+            stableTime = 0;
+            for (StabilityValues stabilityValue: stabilityValues) {
                 stableTime += stabilityValue.duration;
+                Logger.debugPrintln(DEBUG_PREFIX + " average: " + stabilityValue.average +
+                                    " SD: " + stabilityValue.standardDeviation +
+                                    " variation: " + String.format( "%.2f", Math.abs(stabilityValue.standardDeviation/stabilityValue.average)*100) + " %" +
+                                    " duration: " + stabilityValue.duration,
+                                    debugPrint.getValue());
+            }
 
             //Assuming time is linear..
-            Util.debugPrintln(DEBUG_SUFFIX + "stable time: " + stableTime + " total time: " + totalTime + " stability: "
-                              + String.format( "%.2f", stableTime/totalTime*100) + " %", DEBUG_PRINT);
-            return stableTime/totalTime >= (1 - VAR_COEFF) ? true : false;
+            Logger.debugPrintln(DEBUG_PREFIX + "stable time: " + stableTime + " total time: " + totalTime + " stability: "
+                              + String.format( "%.2f", stableTime/totalTime*100) + " %", debugPrint.getValue());
+
+            return costFunction();
         } catch (ArrayIndexOutOfBoundsException e) {
-            e.printStackTrace();
+            Logger.errorLoggerTrace(ERROR_PREFIX + " Array out of bounds exception.", e);
+        } catch (NullPointerException e) {
+            Logger.errorLoggerTrace(ERROR_PREFIX + " Null pointer exception.", e);
         }
-        return false;
+        return -1;
     }
 
-    @Override
-    public List<IState> discretizeData() {
+    private int costFunction() {
         try {
-            if (groupedData.size() < MIN_POINTS) {
-                Util.debugPrintln(DEBUG_SUFFIX + "Not enough data points to check signal for DMV via stability.", DEBUG_PRINT);
-                return null;
-            }
+            if (stabilityValues == null)
+                return -1;
             
-            if (stabilityValues.isEmpty()) {
-                Util.debugPrintln(DEBUG_SUFFIX + "No stability values detected", DEBUG_PRINT);
-                return null;
+            if (stableTime < 0 || totalTime < 0)
+                return -1;
+
+            if (stableTime/totalTime >= (1 - varCoefficient.getValue())) {
+                if (stabilityValues.size() > 0 && stabilityValues.size() <= maxUniqueStates.getValue())
+                    return stabilityValues.size() * valueBaseCost.getValue();
             }
-            
-            Util.debugPrintln(DEBUG_SUFFIX + "Number of averages before merge: " + stabilityValues.size(), DEBUG_PRINT);
-//            for (StabilityValues stabilityValue: stabilityValues)
-//                Util.debugPrintln(DEBUG_SUFFIX + "Average " + stabilityValue.average + " SD: " + stabilityValue.standardDeviation + " Duration: " +
-//                                  stabilityValue.duration, DEBUG_PRINT);
-//            
-            //minimize number of stability values by merging averages close to each other.
-            ArrayList<StabilityValues> mergedStabilityValues = new ArrayList<>();
-            boolean merged = true;
-            while (merged) {
-                merged = false;
-                for (StabilityValues stabilityValue: stabilityValues) {
-                    boolean mergePossible = false;
-                    for (StabilityValues mergeStabilityValue: mergedStabilityValues) {
-                        //Check if relative distance between two stable averages is small and merge is possible
-                        if (mergeStabilityValue.compareTo(stabilityValue)) {
-                            mergeStabilityValue.mergeWith(stabilityValue);
-                            mergePossible = true;
-                            merged = true;
-                            break;
-                        }
+        } catch (NullPointerException e) {
+            Logger.errorLoggerTrace(ERROR_PREFIX + " Null pointer exception.", e);
+        }
+        return -1;
+    }
+    
+    @Override
+    public DataOutput processData() {
+        try {
+            if (costFunction() < 0)
+                return null;
+
+            RawDataChunkGrouped groupedData = new RawDataChunkGrouped();
+            List<IState> outputStates = new ArrayList<>();
+            for (int i = 0; i < inputData.size(); i++) {
+                RawDataPoint point = inputData.get(i);
+
+                Integer pointGroup = -1;
+                double minDistance = 0;
+                Double stabValue = 0.0;
+
+                for (int curGroup = 0; curGroup < stabilityValues.size(); curGroup++) {
+                    StabilityValues stabilityValue = stabilityValues.get(curGroup);
+                    double value = stabilityValue.average;
+                    double distance = Math.abs(value - point.value);
+
+                    if (pointGroup < 0 || distance < minDistance) {
+                        minDistance = distance;
+                        pointGroup = curGroup + 1;
+                        stabValue = value;
                     }
-                    
-                    if (!mergePossible)
-                        mergedStabilityValues.add(stabilityValue);
                 }
-                stabilityValues = mergedStabilityValues;
-                mergedStabilityValues = new ArrayList<>();
+
+                RawDataPointGrouped groupedPoint = new RawDataPointGrouped(point, pointGroup);
+
+                Double start, end;
+                start = inputData.get(i).time;
+                if (i != inputData.size() - 1)
+                    end = inputData.get(i + 1).time;
+                else
+                    end = inputData.get(i).time;
+
+                IState curState = new StateDMV(inputName, pointGroup, start, end, stabValue);
+
+                outputStates.add(curState);
+                groupedData.add(groupedPoint);
             }
-            
-            Util.debugPrintln(DEBUG_SUFFIX + "Number of averages after merge: " + stabilityValues.size(), DEBUG_PRINT);
-            for (StabilityValues stabilityValue: stabilityValues)
-                Util.debugPrintln(DEBUG_SUFFIX + "Average " + stabilityValue.average + " SD: " + stabilityValue.standardDeviation + " Duration: " +
-                                  stabilityValue.duration, DEBUG_PRINT);
-            
+
+            Mergeable.mergeEntries(outputStates);
+
+            DataOutput result = new DataOutput(groupedData, inputName, inputType, outputStates);
+
+            return result;
+
         } catch (ArrayIndexOutOfBoundsException e) {
-            e.printStackTrace();
+            Logger.errorLoggerTrace(ERROR_PREFIX + " Array out of bounds exception.", e);
+        } catch (NullPointerException e) {
+            Logger.errorLoggerTrace(ERROR_PREFIX + " Null pointer exception.", e);
         }
         return null;
     }
-    
-    private void markDataPoints(RawDataChunkGrouped data, int startIndex, int numElements,
-                                int group) throws IndexOutOfBoundsException {
-        for (int i = startIndex; i < startIndex + numElements; i++) {
-            RawDataPointGrouped curDataPoint = data.get(i + 1);
-            curDataPoint.group = group;
-        }
-    }
 
     //TODO: move to utils if used elsewhere
-    private double calculateStandardDeviation(RawDataChunkGrouped data, int startIndex, int numElements,
+    private double calculateStandardDeviation(RawDataChunk groupedData, int startIndex, int numElements,
                                               double average) throws IndexOutOfBoundsException {
         double standardDeviation = 0;
         for (int i = startIndex; i < startIndex + numElements; i++)
-            standardDeviation += Math.pow(data.get(i).value - average, 2);
+            standardDeviation += Math.pow(groupedData.get(i).value - average, 2);
         
         standardDeviation = Math.sqrt(standardDeviation/numElements);
         return standardDeviation;
     }
     
     //TODO: move to utils if used elsewhere
-    private double calculateAverage(RawDataChunkGrouped data, int startIndex, int numElements) 
+    private double calculateAverage(RawDataChunk groupedData2, int startIndex, int numElements) 
                                     throws IndexOutOfBoundsException {
         double average = 0;
         for (int i = startIndex; i < startIndex + numElements; i++)
-            average = average + data.get(i).value;
+            average = average + groupedData2.get(i).value;
 
         return average/numElements;
     }
-
-    @Override
-    public boolean setProcessorProperties(Properties properties) {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    @Override
-    public Properties getProcessorProperties() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public String getName() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public int processCost() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
-    public DataOutput processData() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
 }

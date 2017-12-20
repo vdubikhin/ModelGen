@@ -3,7 +3,7 @@ package modelFSM.discretization;
 import java.util.List;
 
 import modelFSM.data.RawDataChunkGrouped;
-import modelFSM.data.event.EventInfo;
+import modelgen.data.state.IState;
 
 class DiscretizeDataByValues implements DataDiscretizer{
 
@@ -20,7 +20,7 @@ class DiscretizeDataByValues implements DataDiscretizer{
     }
 
     @Override
-    public List<EventInfo> discretizeData() {
+    public List<IState> discretizeData() {
         // TODO Auto-generated method stub
         return null;
     }

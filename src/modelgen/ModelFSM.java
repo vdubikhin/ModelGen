@@ -48,23 +48,21 @@ public class ModelFSM {
     public boolean processData() {
         List<DataInput> dataIn = new ArrayList<DataInput>();
         for (String signalName: signalType.keySet()) {
-            DataInput packedData = new DataInput();
-            packedData.data = rawData.get(signalName);
-            packedData.type = signalType.get(signalName);
-            packedData.name = signalName;
+            DataInput packedData = new DataInput(rawData.get(signalName), signalName, signalType.get(signalName));
             dataIn.add(packedData);
         }
-        
+
         List<Entry<DataOutput, Integer>> dataOut = discretizeData.processData(dataIn);
+
         for (Entry<DataOutput, Integer> entry: dataOut) {
-            System.out.println("Signal: " + entry.getKey().name + " Cost: " + entry.getValue());
-            for (IState state: entry.getKey().states) {
+            System.out.println("Signal: " + entry.getKey().getName() + " Cost: " + entry.getValue());
+            for (IState state: entry.getKey().getStates()) {
                 Map.Entry<Double, Double> mergeStateStamp = state.getTimeStamp();
                 Double start = mergeStateStamp.getKey();
                 Double end = mergeStateStamp.getValue();
 
                 System.out.println("State: " + state.getSignalName() + " Id: " + state.getId() + " Start: " + start
-                                   + " End: " + end + " Value: " + state.convertToString());
+                                   + " End: " + end + " Duration: " + state.getDuration() + " Value: " + state.convertToString());
             }
         }
         

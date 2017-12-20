@@ -3,6 +3,7 @@ package modelFSM;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import modelFSM.data.ControlType;
@@ -10,20 +11,20 @@ import modelFSM.data.RawDataChunk;
 import modelFSM.data.RawDataChunkGrouped;
 import modelFSM.data.RawDataPoint;
 import modelFSM.data.RawDataPointGrouped;
-import modelFSM.data.event.EventInfo;
 import modelFSM.discretization.DataDiscretizerCreator;
 import modelFSM.shared.Util;
+import modelgen.data.state.IState;
 
 public class ModelGen {
 
     private HashMap<String, RawDataChunkGrouped> rawData;
     private HashMap<String, ControlType> signalType;
-    private HashMap<String, List<EventInfo>> eventInfo;
+    private HashMap<String, List<IState>> eventInfo;
     
     private String[] dataHandlers;
     
     public ModelGen(String fileName) {
-        HashMap<String, RawDataChunk> data = Util.parseCSVFile(fileName);
+        Map<String, RawDataChunk> data = Util.parseCSVFile(fileName);
         
         rawData = new HashMap<>();
         signalType = new HashMap<>();
