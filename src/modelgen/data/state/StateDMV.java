@@ -1,6 +1,13 @@
 package modelgen.data.state;
 
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
 import modelgen.data.DataType;
+import modelgen.data.raw.RawDataChunk;
+import modelgen.data.raw.RawDataPoint;
 
 public class StateDMV extends State implements IState {
     private Double value;
@@ -10,14 +17,15 @@ public class StateDMV extends State implements IState {
         this.value = value;
     }
     
-//    StateDMV (String name, Integer id, Double value) {
-//        super(name, id, -1.0, -1.0);
-//        this.value = value;
-//    }
+    public StateDMV (StateDMV toCopy) {
+        this(toCopy.signalName, toCopy.stateId, toCopy.start, toCopy.end, toCopy.value);
+    }
     
     @Override
     public String convertToString() {
-        return "[" + value.toString() + "]";
+        DecimalFormat df = new DecimalFormat();
+        df.setMaximumFractionDigits(2);
+        return "[" + df.format(value) + "]";
     }
 
     @Override
@@ -25,4 +33,21 @@ public class StateDMV extends State implements IState {
         return DataType.DMV;
     }
 
+    @Override
+    public IState makeCopy() {
+        return new StateDMV(this);
+    }
+
+    @Override
+    public RawDataChunk generateSignal(RawDataChunk baseSignal) {
+        RawDataChunk outputData = new RawDataChunk();
+        
+        for (RawDataPoint curPoint: baseSignal) {
+            if (start <= curPoint.getTime() && curPoint.getTime() <= end) {
+                RawDataPoint newPoint = new RawDataPoint(value, curPoint.getTime());
+                outputData.add(newPoint);
+            }
+        }
+        return outputData;
+    }
 }

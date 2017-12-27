@@ -13,8 +13,12 @@ public abstract class DataProcessor<S> implements IDataProcessor<S> {
     
     protected static final String PD_PREFIX = "DP_";
     protected static final String PD_DEBUG_PRINT = PD_PREFIX + "DEBUG_PRINT";
+    protected static final String PD_VALUE_BASE_COST = PD_PREFIX + "VALUE_BASE_COST";
     
     protected final Integer DEBUG_PRINT_LEVEL = 1;
+    protected final Integer VALUE_BASE_COST = 1;
+
+    protected PropertyInteger valueBaseCost;
     protected PropertyInteger debugPrint;
 
     protected PropertySettable propertyManager;
@@ -22,6 +26,9 @@ public abstract class DataProcessor<S> implements IDataProcessor<S> {
     public DataProcessor() {
         debugPrint = new PropertyInteger(PD_DEBUG_PRINT);
         debugPrint.setValue(DEBUG_PRINT_LEVEL);
+
+        valueBaseCost = new PropertyInteger(PD_VALUE_BASE_COST);
+        valueBaseCost.setValue(VALUE_BASE_COST);
 
         Properties moduleProperties = new Properties();
         moduleProperties.put(debugPrint.getName(), debugPrint);

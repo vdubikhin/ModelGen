@@ -23,13 +23,11 @@ import modelgen.processor.IDataProcessor;
 import modelgen.shared.Logger;
 
 public class DiscretizeDataByValues extends DataProcessor<DataOutput> implements IDataProcessor<DataOutput> {
-    final private static String PD_VALUE_BASE_COST = PD_PREFIX + "VALUE_BASE_COST";
     final private static String PD_MAX_UNIQUE_VALUES = PD_PREFIX + "MAX_UNIQUE_VALUES";
 
     final private Integer VALUE_BASE_COST = 1;
     final private Integer MAX_UNIQUE_VALUES = 10;
 
-    PropertyInteger valueBaseCost;
     PropertyInteger maxUniqueValues;
 
     private RawDataChunk inputData;
@@ -44,8 +42,7 @@ public class DiscretizeDataByValues extends DataProcessor<DataOutput> implements
 
         ERROR_PREFIX = "DataProcessor: DiscretizeDataByValues error.";
         DEBUG_PREFIX = "DataProcessor: DiscretizeDataByValues debug.";
-        
-        valueBaseCost = new PropertyInteger(PD_VALUE_BASE_COST);
+
         valueBaseCost.setValue(VALUE_BASE_COST);
 
         maxUniqueValues = new PropertyInteger(PD_MAX_UNIQUE_VALUES);
@@ -55,7 +52,7 @@ public class DiscretizeDataByValues extends DataProcessor<DataOutput> implements
         moduleProperties.put(valueBaseCost.getName(), valueBaseCost);
         moduleProperties.put(maxUniqueValues.getName(), maxUniqueValues);
 
-        propertyManager = new PropertyManager(moduleProperties, DEBUG_PREFIX);
+        propertyManager = new PropertyManager(moduleProperties, ERROR_PREFIX);
     }
 
     public DiscretizeDataByValues(DataInput inputData) {
@@ -78,7 +75,7 @@ public class DiscretizeDataByValues extends DataProcessor<DataOutput> implements
             uniqueValues = new HashMap<>();
             Integer totalNum = 1;
             for (RawDataPoint point: inputData) {
-                Double curValue = point.value;
+                Double curValue = point.getValue();
                 if (!uniqueValues.containsKey(curValue))
                     uniqueValues.put(curValue, totalNum++);
 
@@ -120,17 +117,17 @@ public class DiscretizeDataByValues extends DataProcessor<DataOutput> implements
             List<IState> outputStates = new ArrayList<>();
             for (int i = 0; i < inputData.size(); i++) {
                 RawDataPoint point = inputData.get(i);
-                Integer pointGroup = uniqueValues.get(point.value);
+                Integer pointGroup = uniqueValues.get(point.getValue());
                 RawDataPointGrouped groupedPoint = new RawDataPointGrouped(point, pointGroup);
 
                 Double start, end;
-                start = inputData.get(i).time;
+                start = inputData.get(i).getTime();
                 if (i != inputData.size() - 1)
-                    end = inputData.get(i + 1).time;
+                    end = inputData.get(i + 1).getTime();
                 else
-                    end = inputData.get(i).time;
+                    end = inputData.get(i).getTime();
 
-                IState curState = new StateDMV(inputName, pointGroup, start, end, point.value);
+                IState curState = new StateDMV(inputName, pointGroup, start, end, point.getValue());
 
                 outputStates.add(curState);
                 groupedData.add(groupedPoint);

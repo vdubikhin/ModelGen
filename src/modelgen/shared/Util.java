@@ -96,8 +96,41 @@ public final class Util {
         return null;
     }
 
-    static public boolean groupedDataToStates() {
-        return false;
+    static public RawDataChunk calculateFirstDerivative(RawDataChunk inputData) {
+        try {
+            RawDataChunk outputData = new RawDataChunk();
+            for (int i = 0; i < inputData.size(); i++) {
+                
+                // TODO: Check delta time is not zero
+                // Most left point
+                if (i == 0) {
+                    Double derivPointValue = (inputData.get(i+1).getValue() - inputData.get(i).getValue())/
+                                             (inputData.get(i+1).getTime() - inputData.get(i).getTime());
+                    outputData.add(new RawDataPoint(derivPointValue, inputData.get(i).getTime()));
+                    continue;
+                }
+                
+                // Most right point
+                if (i == inputData.size() - 1) { 
+                    Double derivPointValue = (inputData.get(i).getValue() - inputData.get(i-1).getValue())/
+                                             (inputData.get(i).getTime() - inputData.get(i-1).getTime());
+                    outputData.add(new RawDataPoint(derivPointValue, inputData.get(i).getTime()));
+                    continue;
+                }
+                
+                // Middle points
+                Double derivPointValue = (inputData.get(i+1).getValue() - inputData.get(i-1).getValue())/
+                                         (inputData.get(i+1).getTime() - inputData.get(i-1).getTime());
+                outputData.add(new RawDataPoint(derivPointValue, inputData.get(i).getTime()));
+            }
+
+            return outputData;
+        } catch (ArrayIndexOutOfBoundsException e) {
+            Logger.errorLoggerTrace("Array out of bounds exception.", e);
+        } catch (NullPointerException e) {
+            Logger.errorLoggerTrace("Null pointer exception.", e);
+        }
+        return null;
     }
 
 //    static public ArrayList<Event> dataToEvents(String name, ArrayList<Double> timeArray, ArrayList<Integer> dataArrayGroup) {

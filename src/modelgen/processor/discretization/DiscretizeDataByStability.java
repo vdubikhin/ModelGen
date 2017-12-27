@@ -20,14 +20,14 @@ import modelgen.processor.IDataProcessor;
 import modelgen.shared.Logger;
 
 public class DiscretizeDataByStability extends DataProcessor<DataOutput> implements IDataProcessor<DataOutput> {
-    private class StabilityValues implements Mergeable<StabilityValues> {
+    private class StabilityValue implements Mergeable<StabilityValue> {
         double average;
         double duration;
         double standardDeviation;
         int numPoints;
 
         @Override
-        public boolean canMergeWith(StabilityValues compareTo) {
+        public boolean canMergeWith(StabilityValue compareTo) {
             if (Math.min(this.average, compareTo.average) < MEAN_THRESHOLD) {
                 if (Math.abs( (this.average - compareTo.average) ) < MEAN_THRESHOLD)
                     return true;
@@ -41,7 +41,7 @@ public class DiscretizeDataByStability extends DataProcessor<DataOutput> impleme
         }
 
         @Override
-        public boolean mergeWith(StabilityValues merge) {
+        public boolean mergeWith(StabilityValue merge) {
             if (!canMergeWith(merge))
                 return false;
 
@@ -71,13 +71,12 @@ public class DiscretizeDataByStability extends DataProcessor<DataOutput> impleme
     final private static String PD_MIN_POINTS = PD_PREFIX + "MIN_POINTS";
     final private static String PD_VAR_COEFF = PD_PREFIX + "VAR_COEFF";
     final private static String PD_MEAN_THRESHOLD = PD_PREFIX + "MEAN_THRESHOLD";
-    final private static String PD_VALUE_BASE_COST = PD_PREFIX + "VALUE_BASE_COST";
     final private static String PD_MAX_UNIQUE_VALUES = PD_PREFIX + "MAX_UNIQUE_VALUES";
 
     final private Integer VALUE_BASE_COST = 2;
     final private Integer MAX_UNIQUE_STATES = 10;
-    final private int WINDOW_SIZE = 10;
-    final private int MIN_POINTS = WINDOW_SIZE*10;
+    final private int WINDOW_SIZE = 49;
+    final private int MIN_POINTS = WINDOW_SIZE;
     final private double VAR_COEFF = 0.25;
     final private double MEAN_THRESHOLD = 0.1;
 
@@ -85,7 +84,7 @@ public class DiscretizeDataByStability extends DataProcessor<DataOutput> impleme
     private ControlType inputType;
     private String inputName;
 
-    private ArrayList<StabilityValues> stabilityValues;
+    private ArrayList<StabilityValue> stabilityValues;
     double stableTime, totalTime;
     double minStandardDeviation;
 
@@ -105,7 +104,6 @@ public class DiscretizeDataByStability extends DataProcessor<DataOutput> impleme
 
         name = "Stability";
 
-        valueBaseCost = new PropertyInteger(PD_VALUE_BASE_COST);
         valueBaseCost.setValue(VALUE_BASE_COST);
 
         maxUniqueStates = new PropertyInteger(PD_MAX_UNIQUE_VALUES);
@@ -126,10 +124,14 @@ public class DiscretizeDataByStability extends DataProcessor<DataOutput> impleme
         Properties moduleProperties = propertyManager.getModuleProperties();
         moduleProperties.put(valueBaseCost.getName(), valueBaseCost);
         moduleProperties.put(maxUniqueStates.getName(), maxUniqueStates);
+        moduleProperties.put(windowSize.getName(), windowSize);
+        moduleProperties.put(minPoints.getName(), minPoints);
+        moduleProperties.put(varCoefficient.getName(), varCoefficient);
+        moduleProperties.put(meanThreshold.getName(), meanThreshold);
 
-        propertyManager = new PropertyManager(moduleProperties, DEBUG_PREFIX);
+        propertyManager = new PropertyManager(moduleProperties, ERROR_PREFIX);
     }
-    
+
     public DiscretizeDataByStability(DataInput inputData) {
         this();
         this.inputData = inputData.getData();
@@ -151,7 +153,7 @@ public class DiscretizeDataByStability extends DataProcessor<DataOutput> impleme
                 return -1;
             }
 
-            totalTime = inputData.get(inputData.size() - 1).time - inputData.get(0).time;
+            totalTime = inputData.get(inputData.size() - 1).getTime() - inputData.get(0).getTime();
             if (totalTime <= 0) {
                 Logger.errorLogger(DEBUG_PREFIX + "Total waveform time is less than zero.");
                 return -1;
@@ -160,25 +162,28 @@ public class DiscretizeDataByStability extends DataProcessor<DataOutput> impleme
             stabilityValues = new ArrayList<>();
             minStandardDeviation = -1;
 
-            ArrayList<StabilityValues> potentialStabilityValues = new ArrayList<>();
+            ArrayList<StabilityValue> potentialStabilityValues = new ArrayList<>();
+
             //TODO: Dynamically  recalculate step size, so every chunk is the same time duration.
             for (int i = 0; i < inputData.size(); i = i + windowSize.getValue()) {
+
                 //Determine max amount of points to process
                 int max_step = i + windowSize.getValue() < inputData.size() ? windowSize.getValue() :
                                                                               inputData.size() - i;
+
                 //TODO: change average from points based to duration based.
                 double curAverage = calculateAverage(inputData, i, max_step);
                 double standardDeviation = calculateStandardDeviation(inputData, i, max_step, curAverage);
 
-                StabilityValues stabilityValue = new StabilityValues();
+                StabilityValue stabilityValue = new StabilityValue();
                 stabilityValue.average = curAverage;
-                stabilityValue.duration = inputData.get(Math.min(max_step + i, inputData.size() - 1)).time
-                                        - inputData.get(i).time;
+                stabilityValue.duration = inputData.get(Math.min(max_step + i, inputData.size() - 1)).getTime()
+                                        - inputData.get(i).getTime();
                 stabilityValue.numPoints = max_step;
                 stabilityValue.standardDeviation = standardDeviation;
                 
                 //Check if window stability can be calculated via coefficient of variation
-                if (curAverage >= meanThreshold.getValue()) {
+                if (Math.abs(curAverage) >= meanThreshold.getValue()) {
                   //Check that current window is stable
                     if (Math.abs(standardDeviation/curAverage) < varCoefficient.getValue() &&
                         stabilityValue.duration/totalTime >= (double) max_step/inputData.size()) {
@@ -199,7 +204,7 @@ public class DiscretizeDataByStability extends DataProcessor<DataOutput> impleme
             //is not worse than that of a stable region, determined via coefficient of variation with the
             //lowest standard deviation. If no such reference regions exist, then no stability areas are processed. 
             if (minStandardDeviation >= 0) {
-                for (StabilityValues stabilityValue: potentialStabilityValues) {
+                for (StabilityValue stabilityValue: potentialStabilityValues) {
                     //Comparison is inclusive to include special case, when standard deviation is zero
                     if (stabilityValue.standardDeviation <= minStandardDeviation)
                         stabilityValues.add(stabilityValue);
@@ -208,12 +213,14 @@ public class DiscretizeDataByStability extends DataProcessor<DataOutput> impleme
 
             Logger.debugPrintln(DEBUG_PREFIX + "Number of averages before merge: " + stabilityValues.size(),
                                 debugPrint.getValue());
+
             Mergeable.mergeEntries(stabilityValues);
+
             Logger.debugPrintln(DEBUG_PREFIX + "Number of averages after merge: " + stabilityValues.size(),
                                 debugPrint.getValue());
-            
+
             stableTime = 0;
-            for (StabilityValues stabilityValue: stabilityValues) {
+            for (StabilityValue stabilityValue: stabilityValues) {
                 stableTime += stabilityValue.duration;
                 Logger.debugPrintln(DEBUG_PREFIX + " average: " + stabilityValue.average +
                                     " SD: " + stabilityValue.standardDeviation +
@@ -222,10 +229,10 @@ public class DiscretizeDataByStability extends DataProcessor<DataOutput> impleme
                                     debugPrint.getValue());
             }
 
-            //Assuming time is linear..
             Logger.debugPrintln(DEBUG_PREFIX + "stable time: " + stableTime + " total time: " + totalTime + " stability: "
                               + String.format( "%.2f", stableTime/totalTime*100) + " %", debugPrint.getValue());
 
+            //Assuming time is linear..
             return costFunction();
         } catch (ArrayIndexOutOfBoundsException e) {
             Logger.errorLoggerTrace(ERROR_PREFIX + " Array out of bounds exception.", e);
@@ -269,9 +276,9 @@ public class DiscretizeDataByStability extends DataProcessor<DataOutput> impleme
                 Double stabValue = 0.0;
 
                 for (int curGroup = 0; curGroup < stabilityValues.size(); curGroup++) {
-                    StabilityValues stabilityValue = stabilityValues.get(curGroup);
+                    StabilityValue stabilityValue = stabilityValues.get(curGroup);
                     double value = stabilityValue.average;
-                    double distance = Math.abs(value - point.value);
+                    double distance = Math.abs(value - point.getValue());
 
                     if (pointGroup < 0 || distance < minDistance) {
                         minDistance = distance;
@@ -283,11 +290,11 @@ public class DiscretizeDataByStability extends DataProcessor<DataOutput> impleme
                 RawDataPointGrouped groupedPoint = new RawDataPointGrouped(point, pointGroup);
 
                 Double start, end;
-                start = inputData.get(i).time;
+                start = inputData.get(i).getTime();
                 if (i != inputData.size() - 1)
-                    end = inputData.get(i + 1).time;
+                    end = inputData.get(i + 1).getTime();
                 else
-                    end = inputData.get(i).time;
+                    end = inputData.get(i).getTime();
 
                 IState curState = new StateDMV(inputName, pointGroup, start, end, stabValue);
 
@@ -314,7 +321,7 @@ public class DiscretizeDataByStability extends DataProcessor<DataOutput> impleme
                                               double average) throws IndexOutOfBoundsException {
         double standardDeviation = 0;
         for (int i = startIndex; i < startIndex + numElements; i++)
-            standardDeviation += Math.pow(groupedData.get(i).value - average, 2);
+            standardDeviation += Math.pow(groupedData.get(i).getValue() - average, 2);
         
         standardDeviation = Math.sqrt(standardDeviation/numElements);
         return standardDeviation;
@@ -325,7 +332,7 @@ public class DiscretizeDataByStability extends DataProcessor<DataOutput> impleme
                                     throws IndexOutOfBoundsException {
         double average = 0;
         for (int i = startIndex; i < startIndex + numElements; i++)
-            average = average + groupedData2.get(i).value;
+            average = average + groupedData2.get(i).getValue();
 
         return average/numElements;
     }

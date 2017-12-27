@@ -1,7 +1,7 @@
 package modelgen.data.raw;
 
 public class RawDataPointGrouped extends RawDataPoint{
-    public int group;
+    int group;
 
     public RawDataPointGrouped(Double value, Double time, int groupId) {
         super(value, time);
@@ -13,4 +13,5 @@ public class RawDataPointGrouped extends RawDataPoint{
         group = groupId;
     }
     
+    public int getGroup() {return group;}
 }

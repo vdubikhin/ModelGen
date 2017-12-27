@@ -7,8 +7,10 @@ import modelgen.data.complex.Mergeable;
 import modelgen.shared.Logger;
 
 public abstract class State implements IState {
-    final protected String ERROR_PREFIX = "State error.";
-    
+    final protected String ERROR_PREFIX = "State error. ";
+    final protected String DEBUG_PREFIX = "State debug. ";
+    final protected Integer DEBUG_LEVEL = 1;
+
     protected String signalName;
     protected Integer stateId;
     protected Double start, end;
@@ -28,6 +30,33 @@ public abstract class State implements IState {
     @Override
     public Integer getId() {
         return stateId;
+    }
+
+    @Override
+    public void print() {
+        Logger.debugPrintln(DEBUG_PREFIX + getSignalName() + getId() + " "+ convertToString(), DEBUG_LEVEL);
+    }
+
+    @Override
+    public boolean increaseDuration(IState stateToUse) {
+        if (!signalName.equals(stateToUse.getSignalName()))
+            return false;
+
+        Map.Entry<Double, Double> mergeStateStamp = stateToUse.getTimeStamp();
+        Double stateToUseStart = mergeStateStamp.getKey();
+        Double stateToUseEnd = mergeStateStamp.getValue();
+
+        if (Double.compare(start, stateToUseEnd) == 0) {
+            start = stateToUseStart;
+            return true;
+        }
+
+        if (Double.compare(end, stateToUseStart) == 0) {
+            end = stateToUseEnd;
+            return true;
+        }
+
+        return false;
     }
 
     @Override
@@ -61,7 +90,7 @@ public abstract class State implements IState {
         }
         return false;
     }
-    
+
     @Override
     public boolean mergeWith(IState state) {
         try {

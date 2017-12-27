@@ -10,7 +10,8 @@ public class DiscretizerFactory extends DataProcessorFactory<DataInput, DataOutp
     public DiscretizerFactory() {
         try {
             processorClasses.put(DiscretizeDataByValues.class.newInstance().getName(), DiscretizeDataByValues.class);
-            processorClasses.put(DiscretizeDataByStability.class.newInstance().getName(), DiscretizeDataByStability.class);
+            processorClasses.put(DiscretizeDataByDerivativeCluster.class.newInstance().getName(), DiscretizeDataByDerivativeCluster.class);
+            processorClasses.put(DiscretizeDataByStabilityCluster.class.newInstance().getName(), DiscretizeDataByStabilityCluster.class);
             inputDataClass = DataInput.class;
         } catch (InstantiationException | IllegalAccessException e) {
             Logger.errorLoggerTrace(ERROR_PREFIX + " Failed to create processor factory.", e);

@@ -1,8 +1,8 @@
 package modelgen.data.raw;
 
 public class RawDataPoint {
-    public final Double value;
-    public final Double time;
+    protected final Double value;
+    protected final Double time;
     
     public RawDataPoint(Double value, Double time) {
         this.value = value;
@@ -10,7 +10,15 @@ public class RawDataPoint {
     }
     
     public RawDataPoint(RawDataPoint toCopy) {
-        this.value = toCopy.value;
-        this.time = toCopy.time;
+        this.value = new Double(toCopy.value);
+        this.time = new Double(toCopy.time);
+    }
+    
+    public Double getValue() {
+        return value;
+    }
+
+    public Double getTime() {
+        return time;
     }
 }

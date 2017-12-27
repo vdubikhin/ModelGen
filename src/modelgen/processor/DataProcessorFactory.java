@@ -93,16 +93,23 @@ public abstract class DataProcessorFactory<T, S> implements IDataProcessorFactor
         Logger.errorLogger(ERROR_PREFIX + " Creation of non-initialized data processors is forbidden.");
         return null;
     }
-    
+
     protected IDataProcessor<S> createGenericDataProcessor(String name, T data) {
         try {
             if (processorClasses.containsKey(name)) {
                 Class<? extends IDataProcessor<S>> processorClass = processorClasses.get(name);
                 IDataProcessor<S> processor;
+
                 if (data == null)
                     processor = processorClass.newInstance();
                 else {
+                    if (inputDataClass == null) {
+                        Logger.errorLogger(ERROR_PREFIX + " Input data type is not defined for processor: " + name + ".");
+                        return null;
+                    }
+
                     processor = processorClass.getConstructor(inputDataClass).newInstance(data);
+
                     //Set settings
                     if (processorsProperties != null && processorsProperties.containsKey(name)) {
                         Properties processorProperties = processorsProperties.get(name);
@@ -112,6 +119,7 @@ public abstract class DataProcessorFactory<T, S> implements IDataProcessorFactor
                         }
                     }
                 }
+
                 return processor;
             }
             Logger.errorLogger(ERROR_PREFIX + " Requested data processor is not found.");
