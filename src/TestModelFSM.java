@@ -12,19 +12,20 @@ public class TestModelFSM {
         String groupSuffix = "_group";
         HashMap<String, ControlType> signals = new HashMap<String, ControlType>();
         
-        String fileName = "DD_test_v2.csv";
-        signals.put("IdealNoise", ControlType.OUTPUT);
-        signals.put("IdealTransientNoise", ControlType.OUTPUT);
-        signals.put("Ideal", ControlType.INPUT);
-        signals.put("IdealTransient", ControlType.INPUT);
-        signals.put("LinearNoise", ControlType.INPUT);
-        signals.put("Linear", ControlType.INPUT);
+//        String fileName = "DD_test_v1.csv";
+//        signals.put("IdealDampOscNoise", ControlType.OUTPUT);
+//        signals.put("IdealNoise", ControlType.OUTPUT);
+//        signals.put("IdealTransientNoise", ControlType.OUTPUT);
+//        signals.put("Ideal", ControlType.INPUT);
+//        signals.put("IdealTransient", ControlType.INPUT);
+//        signals.put("LinearNoise", ControlType.INPUT);
+//        signals.put("Linear", ControlType.INPUT);
 
-//        String fileName = "ABC_a_v1.csv";
+        String fileName = "ABC_a_v1.csv";
 //        String fileName = "ABC_v1.csv";
-//        signals.put("C", ControlType.OUTPUT);
-//        signals.put("A", ControlType.INPUT);
-//        signals.put("B", ControlType.INPUT);
+        signals.put("C", ControlType.OUTPUT);
+        signals.put("A", ControlType.INPUT);
+        signals.put("B", ControlType.INPUT);
         
 //        signals.put("p_$flow", ControlType.OUTPUT);
 //        signals.put("power_in", ControlType.INPUT);

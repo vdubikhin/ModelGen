@@ -65,5 +65,4 @@ public class StateContinousRange extends State implements IState {
         return outputData;
     }
 
-    
 }

@@ -1,13 +1,13 @@
 package modelgen.processor.discretization;
 
-import java.util.Map;
-
 import modelgen.data.complex.ClusterPointValue;
 import modelgen.data.property.Properties;
 import modelgen.data.property.PropertyManager;
 import modelgen.data.raw.RawDataChunk;
 import modelgen.data.raw.RawDataChunkGrouped;
 import modelgen.data.raw.RawDataPointGrouped;
+import modelgen.data.stage.StageDataRaw;
+import modelgen.data.stage.StageDataState;
 import modelgen.data.state.IState;
 import modelgen.data.state.StateContinousRange;
 import modelgen.shared.Logger;
@@ -36,7 +36,7 @@ public class DiscretizeDataByDerivativeCluster extends DiscretizeDataByStability
         derivData = null;
     }
 
-    public DiscretizeDataByDerivativeCluster(DataInput inputData) {
+    public DiscretizeDataByDerivativeCluster(StageDataRaw inputData) {
         this();
         this.inputData = inputData.getData();
         this.inputType = inputData.getType();
@@ -50,9 +50,9 @@ public class DiscretizeDataByDerivativeCluster extends DiscretizeDataByStability
     }
     
     @Override
-    public DataOutput processData() {
+    public StageDataState processData() {
         try {
-            DataOutput result = processData(derivData);
+            StageDataState result = processData(derivData);
 
             if (result == null)
                 return null;
@@ -64,7 +64,7 @@ public class DiscretizeDataByDerivativeCluster extends DiscretizeDataByStability
                 groupedDataPoints.add(groupedPoint);
             }
 
-            result = new DataOutput(groupedDataPoints, result.getName(), result.getType(), result.getStates());
+            result = new StageDataState(groupedDataPoints, result.getName(), result.getType(), result.getStates());
             return result;
         } catch (ArrayIndexOutOfBoundsException e) {
             Logger.errorLoggerTrace(ERROR_PREFIX + " Array out of bounds exception.", e);

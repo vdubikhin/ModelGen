@@ -1,13 +1,13 @@
 package modelgen.flow;
 
+import modelgen.data.stage.StageDataRaw;
+import modelgen.data.stage.StageDataState;
 import modelgen.manager.ManagerLowCost;
-import modelgen.processor.discretization.DataInput;
-import modelgen.processor.discretization.DataOutput;
 import modelgen.processor.discretization.DiscretizerFactory;
 
-public class DiscretizeData extends Stage<DataInput, DataOutput> implements IStage<DataInput, DataOutput> {
+public class DiscretizeData extends Stage<StageDataRaw, StageDataState> implements IStage<StageDataRaw, StageDataState> {
     public DiscretizeData() {
-        dataManager = new ManagerLowCost<DataInput, DataOutput>();
+        dataManager = new ManagerLowCost<StageDataRaw, StageDataState>();
         processorFactory = new DiscretizerFactory();
 
         ERROR_PREFIX = "Stage: DiscretizeData error.";

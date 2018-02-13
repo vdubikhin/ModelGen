@@ -5,12 +5,12 @@ import java.util.Map;
 
 import modelgen.data.DataType;
 import modelgen.data.complex.Cloneable;
+import modelgen.data.complex.ComplexComparable;
 import modelgen.data.complex.Mergeable;
 import modelgen.data.complex.Printable;
 import modelgen.data.raw.RawDataChunk;
-import modelgen.data.raw.RawDataPoint;
 
-public interface IState extends Mergeable<IState>, Printable, Cloneable<IState> {
+public interface IState extends Mergeable<IState>, Printable, Cloneable<IState>, ComplexComparable<IState>, IStateTimeless {
 
     String getSignalName();
 

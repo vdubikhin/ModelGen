@@ -12,16 +12,16 @@ import modelgen.data.property.PropertyDouble;
 import modelgen.data.property.PropertyManager;
 import modelgen.data.raw.RawDataChunkGrouped;
 import modelgen.data.raw.RawDataPointGrouped;
+import modelgen.data.stage.StageDataState;
 import modelgen.data.state.IState;
 import modelgen.processor.DataProcessor;
 import modelgen.processor.IDataProcessor;
-import modelgen.processor.discretization.DataOutput;
 import modelgen.shared.Logger;
 import modelgen.shared.clustering.AgglomerativeClusteringMax;
 import modelgen.shared.clustering.ClusteringAlgorithm;
 import modelgen.shared.clustering.ICluster;
 
-public class FilterDataByDurationCluster extends DataProcessor<DataOutput> implements IDataProcessor<DataOutput> {
+public class FilterDataByDurationCluster extends DataProcessor<StageDataState> implements IDataProcessor<StageDataState> {
 //    final private static String PD_DURATION_CUTOFF = PD_PREFIX + "DURATION_CUTOFF";
     final private static String PD_DISTRIBUTION_PEAK = PD_PREFIX + "DISTRIBUTION_PEAK";
 
@@ -61,7 +61,7 @@ public class FilterDataByDurationCluster extends DataProcessor<DataOutput> imple
         propertyManager = new PropertyManager(moduleProperties, ERROR_PREFIX);
     }
 
-    public FilterDataByDurationCluster(DataOutput inputData) {
+    public FilterDataByDurationCluster(StageDataState inputData) {
         this();
         this.inputData = inputData.getData();
         this.inputType = inputData.getType();
@@ -209,7 +209,7 @@ public class FilterDataByDurationCluster extends DataProcessor<DataOutput> imple
     }
 
     @Override
-    public DataOutput processData() {
+    public StageDataState processData() {
         try {
 //            List<IState> filteredStates = new ArrayList<IState>();
 //            for (IState curState: inputStates) {
@@ -230,7 +230,7 @@ public class FilterDataByDurationCluster extends DataProcessor<DataOutput> imple
                 }
             }
             
-            DataOutput result = new DataOutput(outputData, inputName, inputType, filteredStates);
+            StageDataState result = new StageDataState(outputData, inputName, inputType, filteredStates);
             return result;
         } catch (ArrayIndexOutOfBoundsException e) {
             Logger.errorLoggerTrace(ERROR_PREFIX + " Array out of bounds exception.", e);

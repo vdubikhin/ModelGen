@@ -13,13 +13,15 @@ import modelgen.data.raw.RawDataChunk;
 import modelgen.data.raw.RawDataChunkGrouped;
 import modelgen.data.raw.RawDataPoint;
 import modelgen.data.raw.RawDataPointGrouped;
+import modelgen.data.stage.StageDataRaw;
+import modelgen.data.stage.StageDataState;
 import modelgen.data.state.IState;
 import modelgen.data.state.StateDMV;
 import modelgen.processor.DataProcessor;
 import modelgen.processor.IDataProcessor;
 import modelgen.shared.Logger;
 
-public class DiscretizeDataByStability extends DataProcessor<DataOutput> implements IDataProcessor<DataOutput> {
+public class DiscretizeDataByStability extends DataProcessor<StageDataState> implements IDataProcessor<StageDataState> {
     private class StabilityValue implements Mergeable<StabilityValue> {
         double average;
         double duration;
@@ -132,7 +134,7 @@ public class DiscretizeDataByStability extends DataProcessor<DataOutput> impleme
         propertyManager = new PropertyManager(moduleProperties, ERROR_PREFIX);
     }
 
-    public DiscretizeDataByStability(DataInput inputData) {
+    public DiscretizeDataByStability(StageDataRaw inputData) {
         this();
         this.inputData = inputData.getData();
         this.inputType = inputData.getType();
@@ -261,7 +263,7 @@ public class DiscretizeDataByStability extends DataProcessor<DataOutput> impleme
     }
     
     @Override
-    public DataOutput processData() {
+    public StageDataState processData() {
         try {
             if (costFunction() < 0)
                 return null;
@@ -304,7 +306,7 @@ public class DiscretizeDataByStability extends DataProcessor<DataOutput> impleme
 
             Mergeable.mergeEntries(outputStates);
 
-            DataOutput result = new DataOutput(groupedData, inputName, inputType, outputStates);
+            StageDataState result = new StageDataState(groupedData, inputName, inputType, outputStates);
 
             return result;
 

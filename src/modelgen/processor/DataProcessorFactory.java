@@ -14,7 +14,7 @@ public abstract class DataProcessorFactory<T, S> implements IDataProcessorFactor
 
     protected Map<String, Properties> processorsProperties;
     protected Map<String, Class<? extends IDataProcessor<S>>> processorClasses;
-    protected Class<T> inputDataClass;
+    protected Class<?> inputDataClass;
 
     public DataProcessorFactory() {
         processorClasses = new HashMap<>();

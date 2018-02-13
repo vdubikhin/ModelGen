@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Random;
 
 import modelgen.data.DataType;
+import modelgen.data.pattern.DataComparable.DataEquality;
 import modelgen.data.raw.RawDataChunk;
 import modelgen.data.raw.RawDataPoint;
 
@@ -25,7 +26,7 @@ public class StateDMV extends State implements IState {
     public String convertToString() {
         DecimalFormat df = new DecimalFormat();
         df.setMaximumFractionDigits(2);
-        return "[" + df.format(value) + "]";
+        return "[    " + df.format(value) + "   ]";
     }
 
     @Override
@@ -50,4 +51,6 @@ public class StateDMV extends State implements IState {
         }
         return outputData;
     }
+
+
 }

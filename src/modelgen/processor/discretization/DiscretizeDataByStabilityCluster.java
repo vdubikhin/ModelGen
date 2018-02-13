@@ -17,6 +17,8 @@ import modelgen.data.raw.RawDataChunk;
 import modelgen.data.raw.RawDataChunkGrouped;
 import modelgen.data.raw.RawDataPoint;
 import modelgen.data.raw.RawDataPointGrouped;
+import modelgen.data.stage.StageDataRaw;
+import modelgen.data.stage.StageDataState;
 import modelgen.data.state.IState;
 import modelgen.data.state.StateDMV;
 import modelgen.processor.DataProcessor;
@@ -26,13 +28,13 @@ import modelgen.shared.clustering.AgglomerativeClusteringMax;
 import modelgen.shared.clustering.ClusteringAlgorithm;
 import modelgen.shared.clustering.ICluster;
 
-public class DiscretizeDataByStabilityCluster extends DataProcessor<DataOutput> implements IDataProcessor<DataOutput> {
+public class DiscretizeDataByStabilityCluster extends DataProcessor<StageDataState> implements IDataProcessor<StageDataState> {
     final private static String PD_VAR_COEFF = PD_PREFIX + "VAR_COEFF";
     final private static String PD_MAX_UNIQUE_VALUES = PD_PREFIX + "MAX_UNIQUE_VALUES";
 
     final private double VAR_COEFF = 0.25;
     final private Integer VALUE_BASE_COST = 3;
-    final private Integer MAX_UNIQUE_STATES = 10;
+    final private Integer MAX_UNIQUE_STATES = 3;
 
     PropertyDouble varCoefficient;
     PropertyInteger maxUniqueStates;
@@ -63,7 +65,7 @@ public class DiscretizeDataByStabilityCluster extends DataProcessor<DataOutput> 
         propertyManager = new PropertyManager(moduleProperties, ERROR_PREFIX);
     }
 
-    public DiscretizeDataByStabilityCluster(DataInput inputData) {
+    public DiscretizeDataByStabilityCluster(StageDataRaw inputData) {
         this();
         this.inputData = inputData.getData();
         this.inputType = inputData.getType();
@@ -77,7 +79,7 @@ public class DiscretizeDataByStabilityCluster extends DataProcessor<DataOutput> 
     
     protected int processCost(RawDataChunk data) {
         try {
-            if (data == null)
+            if (data == null || inputType == ControlType.INPUT)
                 return -1;
 
             if (stabilityPoints != null)
@@ -118,7 +120,7 @@ public class DiscretizeDataByStabilityCluster extends DataProcessor<DataOutput> 
 
     protected int costFunction() {
         try {
-            if (stabilityPoints == null)
+            if (stabilityPoints == null || inputType == ControlType.INPUT)
                 return -1;
             
             if (stabilityPoints.size() > maxUniqueStates.getValue())
@@ -132,11 +134,11 @@ public class DiscretizeDataByStabilityCluster extends DataProcessor<DataOutput> 
     }
 
     @Override
-    public DataOutput processData() {
+    public StageDataState processData() {
         return processData(inputData);
     }
 
-    protected DataOutput processData(RawDataChunk data) {
+    protected StageDataState processData(RawDataChunk data) {
         try {
             if (data == null)
                 return null;
@@ -147,7 +149,7 @@ public class DiscretizeDataByStabilityCluster extends DataProcessor<DataOutput> 
             RawDataChunkGrouped groupedData = groupDataPoints(data, stabilityPoints);
             List<IState> outputStates = createOutputStates(groupedData, stabilityPoints);
 
-            DataOutput result = new DataOutput(groupedData, inputName, inputType, outputStates);
+            StageDataState result = new StageDataState(groupedData, inputName, inputType, outputStates);
 
             return result;
         } catch (ArrayIndexOutOfBoundsException e) {

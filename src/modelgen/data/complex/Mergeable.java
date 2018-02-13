@@ -3,15 +3,12 @@ package modelgen.data.complex;
 import java.util.ArrayList;
 import java.util.List;
 
-import modelgen.shared.Logger;
-
 
 public interface Mergeable<T extends Mergeable<T>> {
     boolean canMergeWith(T itemToMerge);
 
     boolean mergeWith(T itemToMerge);
 
-    final static String ERROR_PREFIX = "Mergeable error.";
     static <T extends Mergeable<T>> void mergeEntries(List<T> entriesToMerge) 
                                          throws NullPointerException, ArrayIndexOutOfBoundsException {
         List<T> originalEntries = new ArrayList<>(entriesToMerge);

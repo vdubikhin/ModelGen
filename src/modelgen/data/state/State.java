@@ -3,7 +3,6 @@ package modelgen.data.state;
 import java.util.AbstractMap;
 import java.util.Map;
 
-import modelgen.data.complex.Mergeable;
 import modelgen.shared.Logger;
 
 public abstract class State implements IState {
@@ -62,14 +61,7 @@ public abstract class State implements IState {
     @Override
     public boolean canMergeWith(IState itemToMerge) {
         try {
-            if (stateId != itemToMerge.getId())
-                return false;
-
-            if (!signalName.equals(itemToMerge.getSignalName()))
-                return false;
-
-            //TODO: needs double checking
-            if (!this.getClass().equals(itemToMerge.getClass()))
+            if (this.compareTo(itemToMerge) != DataEquality.EQUAL)
                 return false;
 
             if (getDuration() < 0 || itemToMerge.getDuration() < 0)
@@ -118,5 +110,21 @@ public abstract class State implements IState {
             Logger.errorLoggerTrace(ERROR_PREFIX + " Null pointer exception.", e);
         }
         return null;
+    }
+
+    @Override
+    public DataEquality compareTo(IState stateCmp) {
+        //Operation undefined for states of different type
+        if (!this.getClass().equals(stateCmp.getClass()))
+            return null;
+
+        //Operation undefined for states of different signals
+        if (!signalName.equals(stateCmp.getSignalName()))
+            return null;
+
+        if (stateId != stateCmp.getId())
+            return DataEquality.UNIQUE;
+        else
+            return DataEquality.EQUAL;
     }
 }

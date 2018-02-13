@@ -1,4 +1,4 @@
-package modelgen.processor.discretization;
+package modelgen.data.stage;
 
 import java.util.List;
 
@@ -7,13 +7,13 @@ import modelgen.data.raw.RawDataChunk;
 import modelgen.data.raw.RawDataChunkGrouped;
 import modelgen.data.state.IState;
 
-public class DataOutput {
+public class StageDataState {
     private RawDataChunkGrouped data;
     private ControlType dataType;
     private String name;
     private List<IState> states;
 
-    public DataOutput(RawDataChunkGrouped data, String name, ControlType dataType, List<IState> states) {
+    public StageDataState(RawDataChunkGrouped data, String name, ControlType dataType, List<IState> states) {
         this.data = data;
         this.name = name;
         this.dataType = dataType;

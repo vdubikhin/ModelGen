@@ -1,0 +1,77 @@
+package modelgen.processor.rulemining.conflictresolution;
+
+
+import modelgen.data.pattern.PatternVector;
+import modelgen.data.property.Properties;
+import modelgen.data.property.PropertyManager;
+import modelgen.processor.DataProcessor;
+import modelgen.processor.IDataProcessor;
+import modelgen.processor.rulemining.conflictdetection.ConflictComparable;
+import modelgen.processor.rulemining.conflictdetection.RuleComparable;
+import modelgen.processor.rulemining.conflictdetection.RuleFSMVector;
+import modelgen.shared.Logger;
+
+public class ResolveById extends DataProcessor<RuleComparable<PatternVector, RuleFSMVector>>
+                  implements IDataProcessor<RuleComparable<PatternVector, RuleFSMVector>> {
+    final private Integer RESOLVE_COST = 50;
+
+    private ConflictComparable<PatternVector, RuleFSMVector> conflictToResolve;
+
+    public ResolveById() {
+        this.conflictToResolve = null;
+        
+        name = "ResolveById";
+
+        ERROR_PREFIX = "DataProcessor: ResolveById error.";
+        DEBUG_PREFIX = "DataProcessor: ResolveById debug.";
+
+        valueBaseCost.setValue(RESOLVE_COST);
+
+        Properties moduleProperties = propertyManager.getModuleProperties();
+        moduleProperties.put(valueBaseCost.getName(), valueBaseCost);
+
+        propertyManager = new PropertyManager(moduleProperties, ERROR_PREFIX);
+    }
+
+    public ResolveById(ConflictComparable<PatternVector, RuleFSMVector> conflict) {
+        this();
+        conflictToResolve = conflict;
+    }
+
+    @Override
+    public int processCost() {
+        int vectorId = conflictToResolve.getId();
+        RuleFSMVector ruleToFix = conflictToResolve.getRuleToFix();
+        PatternVector vectorToFix = ruleToFix.getRuleVectorById(vectorId);
+
+        if (vectorToFix.isUnique())
+            return -1;
+
+        return valueBaseCost.getValue();
+    }
+
+    @Override
+    public RuleComparable<PatternVector, RuleFSMVector> processData() {
+        try {
+            int vectorId = conflictToResolve.getId();
+            RuleFSMVector ruleToFix = conflictToResolve.getRuleToFix();
+            PatternVector vectorToFix = ruleToFix.getRuleVectorById(vectorId);
+
+            // Check quickly if counter state has been added already
+            if (vectorToFix.isUnique())
+                return null;
+            else 
+                vectorToFix.setUnique(true);
+
+            return ruleToFix;
+        } catch (ArrayIndexOutOfBoundsException e) {
+            Logger.errorLoggerTrace(ERROR_PREFIX + " Array out of bounds exception.", e);
+        } catch (NullPointerException e) {
+            Logger.errorLoggerTrace(ERROR_PREFIX + " Null pointer exception.", e);
+        }
+        return null;
+    }
+
+
+
+}

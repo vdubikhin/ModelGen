@@ -1,14 +1,14 @@
-package modelgen.processor.discretization;
+package modelgen.data.stage;
 
 import modelgen.data.ControlType;
 import modelgen.data.raw.RawDataChunk;
 
-public class DataInput {
+public class StageDataRaw {
     private RawDataChunk data;
     private String name;
     private ControlType type;
 
-    public DataInput(RawDataChunk data, String name, ControlType type) {
+    public StageDataRaw(RawDataChunk data, String name, ControlType type) {
         this.data = data;
         this.name = name;
         this.type = type;

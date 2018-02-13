@@ -16,17 +16,19 @@ import modelgen.data.raw.RawDataChunk;
 import modelgen.data.raw.RawDataChunkGrouped;
 import modelgen.data.raw.RawDataPoint;
 import modelgen.data.raw.RawDataPointGrouped;
+import modelgen.data.stage.StageDataRaw;
+import modelgen.data.stage.StageDataState;
 import modelgen.data.state.IState;
 import modelgen.data.state.StateDMV;
 import modelgen.processor.DataProcessor;
 import modelgen.processor.IDataProcessor;
 import modelgen.shared.Logger;
 
-public class DiscretizeDataByValues extends DataProcessor<DataOutput> implements IDataProcessor<DataOutput> {
+public class DiscretizeDataByValues extends DataProcessor<StageDataState> implements IDataProcessor<StageDataState> {
     final private static String PD_MAX_UNIQUE_VALUES = PD_PREFIX + "MAX_UNIQUE_VALUES";
 
     final private Integer VALUE_BASE_COST = 1;
-    final private Integer MAX_UNIQUE_VALUES = 10;
+    final private Integer MAX_UNIQUE_VALUES = 3;
 
     PropertyInteger maxUniqueValues;
 
@@ -55,7 +57,7 @@ public class DiscretizeDataByValues extends DataProcessor<DataOutput> implements
         propertyManager = new PropertyManager(moduleProperties, ERROR_PREFIX);
     }
 
-    public DiscretizeDataByValues(DataInput inputData) {
+    public DiscretizeDataByValues(StageDataRaw inputData) {
         this();
         this.inputData = inputData.getData();
         this.inputType = inputData.getType();
@@ -105,7 +107,7 @@ public class DiscretizeDataByValues extends DataProcessor<DataOutput> implements
     }
 
     @Override
-    public DataOutput processData() {
+    public StageDataState processData() {
         try {
             if (inputData == null)
                 return null;
@@ -135,7 +137,7 @@ public class DiscretizeDataByValues extends DataProcessor<DataOutput> implements
 
             Mergeable.mergeEntries(outputStates);
 
-            DataOutput result = new DataOutput(groupedData, inputName, inputType, outputStates);
+            StageDataState result = new StageDataState(groupedData, inputName, inputType, outputStates);
 
             return result;
         } catch (NullPointerException e) {
