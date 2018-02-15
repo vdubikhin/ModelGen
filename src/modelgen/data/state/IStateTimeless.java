@@ -12,4 +12,7 @@ public interface IStateTimeless extends Printable {
 
     DataType getType();
 
+    String convertToGuardCondition();
+
+    String convertToAssignmentCondition();
 }

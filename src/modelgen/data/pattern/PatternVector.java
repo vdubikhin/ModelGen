@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import modelgen.data.complex.ComplexComparable;
 import modelgen.data.state.IState;
@@ -162,8 +163,7 @@ public class PatternVector extends HashMap<Integer, StateVector> implements Comp
                 return true;
             }
         }
-        
-        
+
         List<IStateWrapper> filteredStates = new ArrayList<> ();
         for (StateVector stateVector: values()) {
              for (IState state: stateVector.values()) {
@@ -171,13 +171,10 @@ public class PatternVector extends HashMap<Integer, StateVector> implements Comp
              }
         }
 
-        filteredStates.stream()
-            .distinct();
-
-        List<IState> output = new ArrayList<> ();
-        for (IStateWrapper stateWrapper: filteredStates) {
-            output.add(stateWrapper.state);
-        }
+        List<IState> output = filteredStates.stream()
+            .distinct()
+            .map((s) -> (s.state))
+            .collect(Collectors.toList());
 
         if (!output.isEmpty())
             return output;

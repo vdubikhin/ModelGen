@@ -10,7 +10,6 @@ import modelgen.data.stage.StageDataRule;
 import modelgen.data.stage.StageDataState;
 import modelgen.processor.rulemining.SignalDataPatterns;
 import modelgen.processor.rulemining.StatesToPatternConverter;
-import modelgen.processor.rulemining.conflictdetection.ConflictCSC;
 import modelgen.processor.rulemining.conflictdetection.ConflictComparable;
 import modelgen.processor.rulemining.conflictdetection.ConflictDetector;
 import modelgen.processor.rulemining.conflictdetection.ConflictMap;
@@ -60,17 +59,35 @@ public class RuleMiningFSM {
                 conflicts = dataRules.detectConflicts();
                 
                 System.out.println("Iteration: " + safeLimit);
+                
+                for (RuleComparable<PatternVector, RuleFSMVector> entry: dataRules.getStageRules()) {
+                    //TODO: debug print
+                    entry.print();
+                }
             }
-            
+
             List<RuleFSMVector> resolvedRules = dataRules.getStageRules();
             if (!conflicts.isEmpty() || resolvedRules == null || resolvedRules.isEmpty())
                 return null;
-            
+
             List<StageDataRule> output = new ArrayList<>();
-            for (RuleComparable<PatternVector, RuleFSMVector> entry: dataRules.getStageRules()) {
-                //StageDataRule stageRule = new StageDataRule(rules, state)
-                entry.print();
+
+            for (String signalName: signalPatterns.getInitialStates().keySet()) {
+                List<RuleComparable<PatternVector, RuleFSMVector>> rules = new ArrayList<>();
+
+                //Collect all rules for the same output signal
+                for (RuleComparable<PatternVector, RuleFSMVector> entry: dataRules.getStageRules()) {
+                    if (entry.getOutputState().getSignalName().equals(signalName)) {
+                        rules.add(entry);
+                        //TODO: debug print
+                        entry.print();
+                    }
+                }
+                output.add(new StageDataRule(rules, signalPatterns.getInitialStates().get(signalName)));
             }
+
+            if (output.isEmpty())
+                return null;
 
             return output;
         } catch (ArrayIndexOutOfBoundsException e) {

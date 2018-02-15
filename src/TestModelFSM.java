@@ -23,9 +23,9 @@ public class TestModelFSM {
 
         String fileName = "ABC_a_v1.csv";
 //        String fileName = "ABC_v1.csv";
-        signals.put("C", ControlType.OUTPUT);
+        signals.put("C", ControlType.INPUT);
         signals.put("A", ControlType.INPUT);
-        signals.put("B", ControlType.INPUT);
+        signals.put("B", ControlType.OUTPUT);
         
 //        signals.put("p_$flow", ControlType.OUTPUT);
 //        signals.put("power_in", ControlType.INPUT);

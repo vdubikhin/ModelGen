@@ -28,7 +28,7 @@ public class DiscretizeDataByValues extends DataProcessor<StageDataState> implem
     final private static String PD_MAX_UNIQUE_VALUES = PD_PREFIX + "MAX_UNIQUE_VALUES";
 
     final private Integer VALUE_BASE_COST = 1;
-    final private Integer MAX_UNIQUE_VALUES = 3;
+    final private Integer MAX_UNIQUE_VALUES = 5;
 
     PropertyInteger maxUniqueValues;
 

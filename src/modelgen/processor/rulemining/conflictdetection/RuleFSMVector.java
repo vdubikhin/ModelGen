@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import modelgen.data.pattern.DataPattern;
 import modelgen.data.pattern.DataPatterns;
@@ -41,7 +42,8 @@ public class RuleFSMVector implements RuleComparable<PatternVector, RuleFSMVecto
                 else
                     pattern = curPattern.getFullRuleVector();
 
-                Logger.debugPrintln(outputState.getSignalName() + "<" + curPattern.getOutputState().getId()  + ">", 
+                Logger.debugPrintln(outputState.getSignalName() + "<" + curPattern.getOutputState().getId()  + ">" +
+                        "-(" + curPattern.getOutputState().getTimeStamp().getKey() + ")",
                         DEBUG_LEVEL);
                 // Get set of printable names first
                 HashSet<String> stateNames = new HashSet<String>();
@@ -130,7 +132,7 @@ public class RuleFSMVector implements RuleComparable<PatternVector, RuleFSMVecto
             // List of CSC conflicts
             ArrayList<ConflictComparable<PatternVector, RuleFSMVector>> conflictsList
                     = new ArrayList<ConflictComparable<PatternVector, RuleFSMVector>>();
-            
+
             Map<Integer, DataPattern> patternsA = this.outputPatterns;
             Map<Integer, DataPattern> patternsB = ruleToCmp.outputPatterns;
 
@@ -138,26 +140,26 @@ public class RuleFSMVector implements RuleComparable<PatternVector, RuleFSMVecto
                 PatternVector vectorA = patternA.getRuleVector();
                 for (DataPattern predicateVectorExtB: patternsB.values()) {
                     PatternVector vectorB = predicateVectorExtB.getRuleVector();
-                    
+
                     if (conflictType == RuleConflictType.RuleVsRule)
                         vectorB = predicateVectorExtB.getRuleVector();
-                    
+
                     if (conflictType == RuleConflictType.RuleVsPredicate)
                         vectorB = predicateVectorExtB.getFullRuleVector();
-                        
+
                     ConflictComparable<PatternVector, RuleFSMVector> conflict = 
                             new ConflictCSC(this, ruleToCmp, vectorA, vectorB, conflictType);
-                    
+
                     if (conflict.getRuleToFix() != null)
                         conflictsList.add(conflict);
                 }
             }
-            
+
             return conflictsList;
         } catch (ArrayIndexOutOfBoundsException e) {
             Logger.errorLoggerTrace(ERROR_PREFIX + " Array out of bounds exception.", e);
         }
-        
+
         return null;
     }
 
@@ -167,10 +169,16 @@ public class RuleFSMVector implements RuleComparable<PatternVector, RuleFSMVecto
     }
 
     @Override
+    public List<PatternVector> getRulePatterns() {
+        return outputPatterns.values().stream()
+                .map((s) -> (s.getRuleVector()))
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public void resetRuleVectorById(Integer id) {
         outputPatterns.get(id).setRuleVector(new PatternVector(id));
     }
-
 
     @Override
     public PatternVector getFullRuleVectorById(Integer id) {

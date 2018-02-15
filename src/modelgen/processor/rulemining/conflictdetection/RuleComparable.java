@@ -16,6 +16,8 @@ public interface RuleComparable< T extends ComplexComparable<T>, V extends RuleC
 
     T getRuleVectorById(Integer id);
 
+    List<T> getRulePatterns();
+
     T getFullRuleVectorById(Integer id);
 
     //TODO: create a container to store chunks of analog data

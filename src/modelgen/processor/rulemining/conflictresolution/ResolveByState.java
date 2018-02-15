@@ -149,19 +149,28 @@ public class ResolveByState extends DataProcessor<RuleComparable<PatternVector, 
             //Check if it is possible to add any states
             String stateName = null;
 
-            for (String state: stateFull.keySet()) {
-                if (!stateToFix.containsKey(state)) {
-                    stateName = state;
-                    break;
+            Set<String> difference = new HashSet<String>(stateFull.keySet());
+            difference.removeAll(stateToFix.keySet());
+
+            for (String state: difference) {
+                //Detect output state
+                if (state.equals(ruleToFix.getOutputState().getSignalName())) {
+                    //Use it only if it is the only state available
+                    if (difference.size() == 1) {
+                        stateName = state;
+                        break;
+                    } else
+                        continue;
                 }
+                stateName = state;
             }
-            
+
             if (stateName == null)
                 return null;
-            
+
             List<Integer> vectorToFixKeys = new ArrayList<Integer>(vectorToFix.keySet());
             Collections.sort(vectorToFixKeys);
-            
+
             for (Integer key: vectorToFixKeys) {
                 StateVector curVectorToFix = vectorToFix.get(key);
                 StateVector curFullVector = vectorFull.get(key);

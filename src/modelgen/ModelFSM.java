@@ -22,11 +22,13 @@ import modelgen.data.pattern.StateVector;
 import modelgen.data.raw.RawDataChunk;
 import modelgen.data.raw.RawDataPoint;
 import modelgen.data.stage.StageDataRaw;
+import modelgen.data.stage.StageDataRule;
 import modelgen.data.stage.StageDataState;
 import modelgen.data.state.IState;
 import modelgen.flow.DiscretizeData;
 import modelgen.flow.FilterData;
 import modelgen.flow.IStage;
+import modelgen.flow.LPNSynthesisFSM;
 import modelgen.flow.RuleMiningFSM;
 import modelgen.shared.Util;
 
@@ -108,12 +110,16 @@ public class ModelFSM {
 
         System.out.println("--------------");
         RuleMiningFSM ruleMiningStage = new RuleMiningFSM();
-        ruleMiningStage.processData(dataIn2);
+        List<StageDataRule> dataIn3 = ruleMiningStage.processData(dataIn2);
         
 //        SignalDataPatterns dataIn3 = new StatesToPatternConverter().convertStatesToPatterns(dataIn2);
 //        printVectors(dataIn3.getSignalPatterns(), false);
         
 //        ConflictDetector dataRules = new ConflictDetector(dataIn3);
+        
+        System.out.println("--------------");
+        LPNSynthesisFSM lpnSynthesis = new LPNSynthesisFSM();
+        lpnSynthesis.processData(dataIn3);
         
         Map<String, List<IState>> discreteStates = new HashMap<String, List<IState>>();
         for (Entry<StageDataState, Integer> entry: dataOut) {

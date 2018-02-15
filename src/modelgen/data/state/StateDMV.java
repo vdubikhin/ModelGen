@@ -52,5 +52,20 @@ public class StateDMV extends State implements IState {
         return outputData;
     }
 
+    @Override
+    public String convertToGuardCondition() {
+        DecimalFormat df = new DecimalFormat();
+        df.setMaximumFractionDigits(2);
+        String output = "(" + signalName + "==" + df.format(value) + ")";
+        return output;
+    }
+
+    @Override
+    public String convertToAssignmentCondition() {
+        DecimalFormat df = new DecimalFormat();
+        df.setMaximumFractionDigits(2);
+        String output = signalName + ":=[" + df.format(value) + "]";
+        return output;
+    }
 
 }

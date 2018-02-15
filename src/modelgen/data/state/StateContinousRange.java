@@ -65,4 +65,18 @@ public class StateContinousRange extends State implements IState {
         return outputData;
     }
 
+    @Override
+    public String convertToGuardCondition() {
+        //Operation forbidden
+        return null;
+    }
+
+    @Override
+    public String convertToAssignmentCondition() {
+        DecimalFormat df = new DecimalFormat();
+        df.setMaximumFractionDigits(2);
+        String output = signalName + "'" + ":=[" + df.format(lowerBound) + ", " + df.format(upperBound) + "]";
+        return output;
+    }
+
 }

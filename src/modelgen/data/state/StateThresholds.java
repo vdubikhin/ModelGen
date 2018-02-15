@@ -75,4 +75,22 @@ public class StateThresholds extends State implements IState {
         return null;
 
     }
+
+    @Override
+    public String convertToGuardCondition() {
+        DecimalFormat df = new DecimalFormat();
+        df.setMaximumFractionDigits(2);
+        String output = "(" + df.format(thresholds.getUpperBound()) + ">=" + signalName + ">="
+                + df.format(thresholds.getLowBound()) + ")";
+        return output;
+    }
+
+    @Override
+    public String convertToAssignmentCondition() {
+        DecimalFormat df = new DecimalFormat();
+        df.setMaximumFractionDigits(2);
+        String output = signalName + ":=[" + df.format(thresholds.getUpperBound()) + ","
+                + df.format(thresholds.getLowBound()) + "]";
+        return output;
+    }
 }
