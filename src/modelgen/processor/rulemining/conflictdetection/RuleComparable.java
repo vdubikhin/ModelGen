@@ -2,6 +2,7 @@ package modelgen.processor.rulemining.conflictdetection;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import modelgen.data.complex.ComplexComparable;
 import modelgen.data.raw.RawDataChunk;
@@ -29,4 +30,8 @@ public interface RuleComparable< T extends ComplexComparable<T>, V extends RuleC
     void setFullRuleVectorById(Integer id, T vector);
 
     void resetRuleVectorById(Integer id);
+
+    void minimizeRules();
+
+    Entry<Double, Double> getDelayById(Integer id);
 }

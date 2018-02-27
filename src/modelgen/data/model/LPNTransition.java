@@ -11,6 +11,11 @@ import modelgen.data.state.IStateTimeless;
 
 public class LPNTransition {
     String transitionName;
+    Double delayLow, delayHigh;
+
+    boolean persistent;
+    int priority;
+
     List<IState> guardConditions;
     List<IStateTimeless> assignmentConditions;
 
@@ -23,6 +28,24 @@ public class LPNTransition {
         assignmentConditions = new ArrayList<>();
         preSet = new HashSet<>();
         postSet = new HashSet<>();
+        delayLow = 0.0;
+        delayHigh = 0.0;
+        persistent = false;
+        priority = 1;
+    }
+
+    public LPNTransition(String name, boolean persistent, int priority) {
+        this(name);
+        this.persistent = persistent;
+        this.priority = priority;
+    }
+    
+    public void setDelayLow(Double delay) {
+        delayLow = delay;
+    }
+
+    public void setDelayHigh(Double delay) {
+        delayHigh = delay;
     }
 
     public void addGuardConditions(Collection<IState> conditionsToAdd) {
@@ -68,7 +91,10 @@ public class LPNTransition {
     public String getLabel() {
         String output = null;
         if (transitionName != null || guardConditions != null) {
-            output = transitionName + "  [shape=plaintext,label=" + '"' + transitionName + "\\n{";
+            String fontColor = "";
+            if (persistent)
+                fontColor = ",fontcolor=Blue";
+            output = transitionName + "  [shape=plaintext" + fontColor + ",label=" + '"' + transitionName + "\\n{";
         }
 
         boolean prepend = false;
@@ -80,8 +106,16 @@ public class LPNTransition {
             prepend = true;
         }
 
+        if (guardConditions.isEmpty())
+            output += "true";
+
         output += "}";
 
+        if (delayLow > 0.0 && delayHigh > 0.0) {
+            output += "\\n[" + delayLow + ", " + delayHigh + "]";
+        }
+        
+        
         if (assignmentConditions != null && !assignmentConditions.isEmpty()) {
             prepend = false;
             output += "\\n<";

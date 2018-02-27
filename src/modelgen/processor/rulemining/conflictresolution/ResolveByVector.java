@@ -59,7 +59,7 @@ public class ResolveByVector extends DataProcessor<RuleComparable<PatternVector,
             if (vectorFull.size() == vectorToFix.size())
                 return -1;
 
-            return valueBaseCost.getValue();
+            return valueBaseCost.getValue() * (vectorToFix.size() + 1);
         } catch (NullPointerException e) {
             Logger.errorLoggerTrace(ERROR_PREFIX + " Null pointer exception.", e);
         }

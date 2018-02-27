@@ -40,11 +40,14 @@ public class ResolveById extends DataProcessor<RuleComparable<PatternVector, Rul
 
     @Override
     public int processCost() {
-        int vectorId = conflictToResolve.getId();
-        RuleFSMVector ruleToFix = conflictToResolve.getRuleToFix();
-        PatternVector vectorToFix = ruleToFix.getRuleVectorById(vectorId);
+        Integer vectorToFixId = conflictToResolve.getId();
+        Integer dependancyVectorId = conflictToResolve.getOffendingVectorId();
 
-        if (vectorToFix.isUnique())
+        RuleFSMVector ruleToFix = conflictToResolve.getRuleToFix();
+
+        PatternVector vectorToFix = ruleToFix.getRuleVectorById(vectorToFixId);
+
+        if (vectorToFix.hasDependency(dependancyVectorId))
             return -1;
 
         return valueBaseCost.getValue();
@@ -53,16 +56,29 @@ public class ResolveById extends DataProcessor<RuleComparable<PatternVector, Rul
     @Override
     public RuleComparable<PatternVector, RuleFSMVector> processData() {
         try {
-            int vectorId = conflictToResolve.getId();
+            Integer vectorToFixId = conflictToResolve.getId();
+            Integer dependencyVectorId = conflictToResolve.getOffendingVectorId();
+
             RuleFSMVector ruleToFix = conflictToResolve.getRuleToFix();
-            PatternVector vectorToFix = ruleToFix.getRuleVectorById(vectorId);
+            RuleFSMVector dependencyRule = conflictToResolve.getOffendingRule();
+
+            PatternVector vectorToFix = ruleToFix.getRuleVectorById(vectorToFixId);
+            PatternVector vectorToFixFull = ruleToFix.getFullRuleVectorById(vectorToFixId);
+
+            PatternVector dependencyVector = dependencyRule.getRuleVectorById(dependencyVectorId);
+            PatternVector dependencyVectorFull = dependencyRule.getFullRuleVectorById(dependencyVectorId);
 
             // Check quickly if counter state has been added already
-            if (vectorToFix.isUnique())
+            if (vectorToFix.hasDependency(dependencyVectorId))
                 return null;
-            else 
-                vectorToFix.setUnique(true);
+            else {
+                vectorToFix.addDependency(dependencyVectorId);
+                dependencyVector.addDependency(vectorToFixId);
 
+                vectorToFixFull.addDependency(dependencyVectorId);
+                dependencyVectorFull.addDependency(vectorToFixId);
+            }
+            
             return ruleToFix;
         } catch (ArrayIndexOutOfBoundsException e) {
             Logger.errorLoggerTrace(ERROR_PREFIX + " Array out of bounds exception.", e);

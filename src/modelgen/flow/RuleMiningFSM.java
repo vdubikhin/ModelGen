@@ -71,13 +71,14 @@ public class RuleMiningFSM {
                 return null;
 
             List<StageDataRule> output = new ArrayList<>();
-
+            System.out.println("--------------");
             for (String signalName: signalPatterns.getInitialStates().keySet()) {
                 List<RuleComparable<PatternVector, RuleFSMVector>> rules = new ArrayList<>();
 
                 //Collect all rules for the same output signal
                 for (RuleComparable<PatternVector, RuleFSMVector> entry: dataRules.getStageRules()) {
                     if (entry.getOutputState().getSignalName().equals(signalName)) {
+                        entry.minimizeRules();
                         rules.add(entry);
                         //TODO: debug print
                         entry.print();

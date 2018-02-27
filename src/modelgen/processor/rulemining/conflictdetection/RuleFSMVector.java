@@ -1,5 +1,6 @@
 package modelgen.processor.rulemining.conflictdetection;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -9,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import modelgen.data.complex.Mergeable;
 import modelgen.data.pattern.DataPattern;
 import modelgen.data.pattern.DataPatterns;
 import modelgen.data.pattern.PatternVector;
@@ -43,7 +45,8 @@ public class RuleFSMVector implements RuleComparable<PatternVector, RuleFSMVecto
                     pattern = curPattern.getFullRuleVector();
 
                 Logger.debugPrintln(outputState.getSignalName() + "<" + curPattern.getOutputState().getId()  + ">" +
-                        "-(" + curPattern.getOutputState().getTimeStamp().getKey() + ")",
+                        "-(" + curPattern.getOutputState().getTimeStamp().getKey() + ")- [" +
+                        curPattern.getDelayLow() + ", " + curPattern.getDelayHigh() + "]",
                         DEBUG_LEVEL);
                 // Get set of printable names first
                 HashSet<String> stateNames = new HashSet<String>();
@@ -93,10 +96,12 @@ public class RuleFSMVector implements RuleComparable<PatternVector, RuleFSMVecto
                     prefixString = " " + prefixString;
                 
                 if (stateNames.isEmpty())
-                    Logger.debugPrintln(pattern.getId() + " unique: " + pattern.isUnique(), DEBUG_LEVEL);
+                    Logger.debugPrintln(pattern.getId() + " PreSet: " + pattern.getPreSet() + " PostSet: "+
+                            pattern.getPostSet(), DEBUG_LEVEL);
                 else 
-                    Logger.debugPrintln(prefixString  + "unique: " + pattern.isUnique(), DEBUG_LEVEL);
-                            
+                    Logger.debugPrintln(prefixString + " PreSet: " + pattern.getPreSet() + " PostSet: "+
+                            pattern.getPostSet(), DEBUG_LEVEL);
+
                 Logger.debugPrintln("", DEBUG_LEVEL);
             }
         } catch (ArrayIndexOutOfBoundsException e) {
@@ -141,15 +146,20 @@ public class RuleFSMVector implements RuleComparable<PatternVector, RuleFSMVecto
                 for (DataPattern predicateVectorExtB: patternsB.values()) {
                     PatternVector vectorB = predicateVectorExtB.getRuleVector();
 
-                    if (conflictType == RuleConflictType.RuleVsRule)
+                    if (conflictType == RuleConflictType.RuleVsRulePattern)
                         vectorB = predicateVectorExtB.getRuleVector();
 
-                    if (conflictType == RuleConflictType.RuleVsPredicate)
+                    if (conflictType == RuleConflictType.RuleVsFullPattern)
                         vectorB = predicateVectorExtB.getFullRuleVector();
 
                     ConflictComparable<PatternVector, RuleFSMVector> conflict = 
                             new ConflictCSC(this, ruleToCmp, vectorA, vectorB, conflictType);
 
+                    System.out.println("Rule " + outputState.getSignalName() + "<" + outputState.getId() + ">: "
+                            + vectorA.getId() + " vs " + 
+                            "Rule " + ruleToCmp.outputState.getSignalName() + "<" + ruleToCmp.outputState.getId() + ">: " +
+                            vectorB.getId() + " - " + vectorA.compareTo(vectorB) + " - " + conflictType);
+                    
                     if (conflict.getRuleToFix() != null)
                         conflictsList.add(conflict);
                 }
@@ -193,5 +203,42 @@ public class RuleFSMVector implements RuleComparable<PatternVector, RuleFSMVecto
     @Override
     public HashMap<String, RawDataChunk> getAnalogDataById(Integer id) {
         return outputPatterns.get(id).getInputRawData();
+    }
+
+    @Override
+    public void minimizeRules() {
+        try {
+            List<DataPattern> rulePatterns = new ArrayList<DataPattern>(outputPatterns.values());
+            Mergeable.mergeEntries(rulePatterns);
+
+            outputPatterns = new HashMap<>();
+            for (DataPattern curPattern: rulePatterns) {
+                outputPatterns.put(curPattern.getFullRuleVector().getId(), curPattern);
+            }
+
+        } catch (NullPointerException e) {
+            Logger.errorLoggerTrace(ERROR_PREFIX + " Null pointer exception.", e);
+        } catch (ArrayIndexOutOfBoundsException e) {
+            Logger.errorLoggerTrace(ERROR_PREFIX + " Array out of bounds exception.", e);
+        }
+    }
+    
+    @Override
+    public Map.Entry<Double, Double> getDelayById(Integer id) {
+        try {
+            Double delayLow =  outputPatterns.get(id).getDelayLow();
+            Double delayHigh=  outputPatterns.get(id).getDelayHigh();
+            
+            if (delayLow == null || delayHigh == null)
+                return null;
+            
+            Map.Entry<Double, Double> output = new AbstractMap.SimpleEntry<Double, Double>(delayLow, delayHigh);
+            return output;
+        } catch (NullPointerException e) {
+            Logger.errorLoggerTrace(ERROR_PREFIX + " Null pointer exception.", e);
+        } catch (ArrayIndexOutOfBoundsException e) {
+            Logger.errorLoggerTrace(ERROR_PREFIX + " Array out of bounds exception.", e);
+        }
+        return null;
     }
 }

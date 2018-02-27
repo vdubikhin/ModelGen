@@ -20,14 +20,14 @@ public class ConflictCSC implements ConflictComparable<PatternVector, RuleFSMVec
         this.ruleA = null;
         this.ruleB = null;
         
-        if (conflictType == DataEquality.SUBSET) {
+        if (conflictType == DataEquality.SUBSET || conflictType == DataEquality.EQUAL) {
             this.ruleA = ruleA;
             this.ruleB = ruleB;
             this.vectorA = vectorA.getId();
             this.vectorB = vectorB.getId();
         }
         
-        if (conflictType == DataEquality.SUPERSET && ruleConflictType != RuleConflictType.RuleVsPredicate) {
+        if (conflictType == DataEquality.SUPERSET && ruleConflictType != RuleConflictType.RuleVsFullPattern) {
             this.ruleA = ruleB;
             this.ruleB = ruleA;
             this.vectorA = vectorB.getId();
@@ -52,15 +52,24 @@ public class ConflictCSC implements ConflictComparable<PatternVector, RuleFSMVec
         DataEquality conflictType = ruleA.getRuleVectorById(vectorA).compareTo(vectorToCmp);
         return conflictType;
     }
-    
+
     @Override
     public RuleFSMVector getRuleToFix() {
         return ruleA;
     }
-    
+
     @Override
     public Integer getId() {
         return vectorA;
     }
 
+    @Override
+    public RuleFSMVector getOffendingRule() {
+        return ruleB;
+    }
+
+    @Override
+    public Integer getOffendingVectorId() {
+        return vectorB;
+    }
 }

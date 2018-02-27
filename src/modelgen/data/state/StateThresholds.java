@@ -29,7 +29,7 @@ public class StateThresholds extends State implements IState {
 
     @Override
     public DataType getType() {
-        return DataType.CONTINOUS_RANGE;
+        return DataType.CONTINOUS_THRESHOLD;
     }
 
     @Override

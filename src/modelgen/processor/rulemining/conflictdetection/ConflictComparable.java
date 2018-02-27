@@ -9,4 +9,8 @@ public interface ConflictComparable< T extends ComplexComparable<T>, V extends R
     DataEquality compareTo(T vectorToCmp);
 
     V getRuleToFix();
+
+    V getOffendingRule();
+
+    Integer getOffendingVectorId();
 }

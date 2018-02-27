@@ -24,6 +24,14 @@ public class LPNPlace {
         postSet.add(transition);
     }
 
+    public Set<LPNTransition> getPreSet() {
+        return preSet;
+    }
+
+    public Set<LPNTransition> getPostSet() {
+        return postSet;
+    }
+
     public void setInit() {
         initialized = true;
     }
