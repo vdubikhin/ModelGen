@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import modelgen.data.DataType;
 import modelgen.data.state.IState;
 import modelgen.data.state.IStateTimeless;
 
@@ -38,6 +39,10 @@ public class LPNTransition {
         this(name);
         this.persistent = persistent;
         this.priority = priority;
+    }
+    
+    public boolean isPersistent() {
+        return persistent;
     }
     
     public void setDelayLow(Double delay) {
@@ -88,6 +93,78 @@ public class LPNTransition {
         return transitionName;
     }
 
+    public String getDelayLabel() {
+        String output = null;
+        if (delayLow > 0.0 && delayHigh > 0.0) {
+            if (delayLow.equals(delayHigh))
+                output = "<" + getName() + "=[" + delayLow +  "]>";
+            else
+                output = "<" + getName() + "=[uniform(" + delayLow + ","+ delayHigh + ")]>";
+        }
+        return output;
+    }
+
+    public String getPriorityLabel() {
+        String output = null;
+        if (priority > 1) 
+            output = "<" + getName() + "=["+ priority +"]>";
+        return output;
+    }
+
+    public String getEnablingLabel() {
+        String output = "";
+        
+        output += "<" + getName() + "=[";
+
+        if (guardConditions.isEmpty())
+            output += "true";
+        else {
+            boolean prepend = false;
+            for (IState guard: guardConditions) {
+                if (prepend)
+                    output += "&";
+
+                output += guard.convertToGuardCondition();
+                prepend = true;
+            }
+        }
+        output += "]>";
+
+        return output;
+    }
+
+    public String getAssingmentLabel() {
+        String output = "";
+        if (assignmentConditions != null && !assignmentConditions.isEmpty()) {
+            for (IStateTimeless guard: assignmentConditions) {
+                if (guard.getType() != DataType.CONTINOUS_RANGE) {
+                    output += "<" + getName() + "=[";
+                    output += guard.convertToAssignmentCondition();
+                    output += "]>";
+                }
+            }
+        } else 
+            return null;
+
+        return output;
+    }
+
+    public String getRateAssingmentLabel() {
+        String output = "";
+        if (assignmentConditions != null && !assignmentConditions.isEmpty()) {
+            for (IStateTimeless guard: assignmentConditions) {
+                if (guard.getType() == DataType.CONTINOUS_RANGE) {
+                    output += "<" + getName() + "=[";
+                    output += guard.convertToAssignmentCondition();
+                    output += "]>";
+                }
+            }
+        } else 
+            return null;
+
+        return output;
+    }
+
     public String getLabel() {
         String output = null;
         if (transitionName != null || guardConditions != null) {
@@ -114,8 +191,7 @@ public class LPNTransition {
         if (delayLow > 0.0 && delayHigh > 0.0) {
             output += "\\n[" + delayLow + ", " + delayHigh + "]";
         }
-        
-        
+
         if (assignmentConditions != null && !assignmentConditions.isEmpty()) {
             prepend = false;
             output += "\\n<";

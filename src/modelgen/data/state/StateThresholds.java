@@ -78,10 +78,8 @@ public class StateThresholds extends State implements IState {
 
     @Override
     public String convertToGuardCondition() {
-        DecimalFormat df = new DecimalFormat();
-        df.setMaximumFractionDigits(2);
-        String output = "(" + df.format(thresholds.getUpperBound()) + ">=" + signalName + ">="
-                + df.format(thresholds.getLowBound()) + ")";
+        String output = "~(" + signalName + ">=" + convertToInt(thresholds.getUpperBound()) + ")&(" + signalName + ">="
+                + convertToInt(thresholds.getLowBound()) + ")";
         return output;
     }
 
@@ -89,8 +87,17 @@ public class StateThresholds extends State implements IState {
     public String convertToAssignmentCondition() {
         DecimalFormat df = new DecimalFormat();
         df.setMaximumFractionDigits(2);
-        String output = signalName + ":=[" + df.format(thresholds.getUpperBound()) + ","
-                + df.format(thresholds.getLowBound()) + "]";
+        String output = signalName + ":=uniform(" + convertToInt(thresholds.getUpperBound()) + ","
+                + convertToInt(thresholds.getLowBound()) + ")";
+        return output;
+    }
+
+    @Override
+    public String convertToInitialCondition() {
+        DecimalFormat df = new DecimalFormat();
+        df.setMaximumFractionDigits(2);
+        String output = signalName + "=uniform(" + convertToInt(thresholds.getUpperBound()) + ","
+                + convertToInt(thresholds.getLowBound()) + ")";
         return output;
     }
 }

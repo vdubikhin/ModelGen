@@ -21,7 +21,7 @@ import modelgen.shared.clustering.AgglomerativeClusteringMax;
 import modelgen.shared.clustering.ClusteringAlgorithm;
 import modelgen.shared.clustering.ICluster;
 
-public class FilterDataByDurationCluster extends DataProcessor<StageDataState> implements IDataProcessor<StageDataState> {
+public class FilterDataByDurationCluster extends FilterDataBase implements IDataProcessor<StageDataState> {
 //    final private static String PD_DURATION_CUTOFF = PD_PREFIX + "DURATION_CUTOFF";
     final private static String PD_DISTRIBUTION_PEAK = PD_PREFIX + "DISTRIBUTION_PEAK";
 
@@ -121,15 +121,15 @@ public class FilterDataByDurationCluster extends DataProcessor<StageDataState> i
             double minDuration = Double.MAX_VALUE;
             double clMaxDuration = 0;
             for (ClusterPointNumbers cl: clusterPointArray) {
-//                Logger.debugPrintln("Cl min: " + cl.getClusterMin() + "Cl max: " + cl.getClusterMax() + 
-//                        " Cl duration: " + cl.getClusterDuraion() + " Cl eval: " + cl.evaluate(), debugPrint.getValue());
+                Logger.debugPrintln("Cl min: " + cl.getClusterMin() + " Cl max: " + cl.getClusterMax() + 
+                        " Cl duration: " + cl.getClusterDuraion() + " Cl eval: " + cl.evaluate(), debugPrint.getValue());
                 if (cl.evaluate() > clMaxDuration) {
                     clMaxDuration = cl.evaluate();
                     minDuration = cl.getClusterMin();
                 }
             }
-//            Logger.debugPrintln("Signal " + inputName + " minDuration: " + minDuration +
-//                    " clMaxDuration: " + clMaxDuration + " Size: " + clusterPointArray.size(), debugPrint.getValue());
+            Logger.debugPrintln("Signal " + inputName + " minDuration: " + minDuration +
+                    " clMaxDuration: " + clMaxDuration + " Size: " + clusterPointArray.size(), debugPrint.getValue());
 
             //Use cut off duration to remove noise states
             filteredStates.clear();
@@ -170,42 +170,9 @@ public class FilterDataByDurationCluster extends DataProcessor<StageDataState> i
     //XXX: should represent precision loss??
     private int costFunction() throws NullPointerException {
         if (filteredStates != null)
-            return (inputStates.size() - filteredStates.size()) * valueBaseCost.getValue() + 1;
+            return filteredStates.size() * valueBaseCost.getValue();
 
         return -1;
-    }
-
-    private List<IState> correctStates(List<IState> originalStates, List<IState> filteredStates) 
-                               throws NullPointerException, ArrayIndexOutOfBoundsException {
-        List<IState> correctedStates = new ArrayList<>(filteredStates.size());
-        
-        int indexOriginal = 0, indexFiltered = 0;
-        IState curCorrectedState = filteredStates.get(indexFiltered).makeCopy();
-        List<IState> curNoiseStates = new ArrayList<>();
-
-        for (indexOriginal = 0; indexOriginal < originalStates.size(); indexOriginal++ ) {
-            IState curOriginalState = originalStates.get(indexOriginal);
-            IState curFilteredState = filteredStates.get(indexFiltered);
-
-            if (curOriginalState.equals(curFilteredState)) {
-                if (!curCorrectedState.increaseDuration(curNoiseStates)) {
-                    Logger.errorLogger(ERROR_PREFIX + " Failed to merge noise states.");
-                    return null;
-                }
-
-                curNoiseStates.clear();
-                correctedStates.add(curCorrectedState);
-
-                if (indexFiltered + 1 < filteredStates.size())
-                    curCorrectedState = filteredStates.get(++indexFiltered).makeCopy();
-                else
-                    break;
-            } else {
-                curNoiseStates.add(curOriginalState);
-            }
-        }
-
-        return correctedStates;
     }
 
     @Override

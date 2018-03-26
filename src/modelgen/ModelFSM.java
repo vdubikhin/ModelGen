@@ -91,23 +91,44 @@ public class ModelFSM {
             dataIn2.add(entry.getKey());
         }
         
-//        //TODO: FILTERING
-//        System.out.println("--------------");
-//        dataOut = filterData.processData(dataIn2);
-//        
-//        for (Entry<StageDataStates, Integer> entry: dataOut) {
-//            System.out.println("Signal: " + entry.getKey().getName() + " Cost: " + entry.getValue() + " Size: " +
-//                    entry.getKey().getStates().size());
-//            for (IState state: entry.getKey().getStates()) {
-//                Map.Entry<Double, Double> mergeStateStamp = state.getTimeStamp();
-//                Double start = mergeStateStamp.getKey();
-//                Double end = mergeStateStamp.getValue();
-//
-//                System.out.println("State: " + state.getSignalName() + " Id: " + state.getId() + " Start: " + start
-//                                   + " End: " + end + " Duration: " + state.getDuration() + " Value: " + state.convertToString());
-//            }
-//        }
 
+        
+//        //TODO: FILTERING
+        System.out.println("--------------");
+        dataOut = filterData.processData(dataIn2);
+        dataIn2.clear();
+        
+        for (Entry<StageDataState, Integer> entry: dataOut) {
+            if (entry.getKey().getStates() != null) {
+                System.out.println("Signal: " + entry.getKey().getName() + " Cost: " + entry.getValue() + " Size: " +
+                        entry.getKey().getStates().size());
+
+                for (IState state: entry.getKey().getStates()) {
+                    Map.Entry<Double, Double> mergeStateStamp = state.getTimeStamp();
+                    Double start = mergeStateStamp.getKey();
+                    Double end = mergeStateStamp.getValue();
+
+                    System.out.println("State: " + state.getSignalName() + " Id: " + state.getId() + " Start: " + start
+                                       + " End: " + end + " Duration: " + state.getDuration() + " Value: " + state.convertToString());
+                }
+            } else
+                System.out.println("Signal: " + entry.getKey().getName() + " Cost: " + entry.getValue() + " Size: 0");
+            dataIn2.add(entry.getKey());
+        }
+        
+
+        
+        Map<String, List<IState>> discreteStates = new HashMap<String, List<IState>>();
+        for (Entry<StageDataState, Integer> entry: dataOut) {
+            StageDataState data = entry.getKey();
+            discreteStates.put(data.getName(), data.getStates());
+        }
+        
+        Map<String, RawDataChunk> generatedData = generateWaveform(rawData, discreteStates);
+        dumpWaveform("GeneratedData", generatedData);
+        
+        if (true)
+            return false;
         System.out.println("--------------");
         RuleMiningFSM ruleMiningStage = new RuleMiningFSM();
         List<StageDataRule> dataIn3 = ruleMiningStage.processData(dataIn2);
@@ -121,14 +142,7 @@ public class ModelFSM {
         LPNSynthesisFSM lpnSynthesis = new LPNSynthesisFSM();
         lpnSynthesis.processData(dataIn3);
         
-        Map<String, List<IState>> discreteStates = new HashMap<String, List<IState>>();
-        for (Entry<StageDataState, Integer> entry: dataOut) {
-            StageDataState data = entry.getKey();
-            discreteStates.put(data.getName(), data.getStates());
-        }
-        
-        Map<String, RawDataChunk> generatedData = generateWaveform(rawData, discreteStates);
-        dumpWaveform("GeneratedData", generatedData);
+
         
         return false;
     }

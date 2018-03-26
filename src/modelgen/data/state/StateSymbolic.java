@@ -32,6 +32,11 @@ public class StateSymbolic extends State implements IState {
     }
 
     @Override
+    public String getSignalName() {
+        return signalName + POSTFIX;
+    }
+
+    @Override
     public String convertToString() {
         return "[" + stateId + "]";
     }
@@ -43,18 +48,18 @@ public class StateSymbolic extends State implements IState {
 
     @Override
     public String convertToGuardCondition() {
-        String output;
+        String output = "";
         if (guardNegation)
-            output = "(" +  signalName + POSTFIX + "!=" + stateId + ")";
-        else
-            output = "(" +  signalName + POSTFIX + "==" + stateId + ")";
+            output = "~";
+
+        output += "(" +  signalName + POSTFIX + "=" + stateId + ")";
 
         return output;
     }
 
     @Override
     public String convertToAssignmentCondition() {
-        String output = signalName + POSTFIX + ":=[" + stateId + "]";
+        String output = signalName + POSTFIX + ":=" + stateId;
         return output;
     }
 
@@ -67,5 +72,11 @@ public class StateSymbolic extends State implements IState {
     public RawDataChunk generateSignal(RawDataChunk baseSignal) {
         // TODO Auto-generated method stub
         return null;
+    }
+
+    @Override
+    public String convertToInitialCondition() {
+        String output = signalName + POSTFIX + "=" + stateId;
+        return output;
     }
 }

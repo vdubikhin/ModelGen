@@ -1,7 +1,9 @@
 package modelgen.processor.discretization;
 
+import modelgen.data.ControlType;
 import modelgen.data.complex.ClusterPointValue;
 import modelgen.data.property.Properties;
+import modelgen.data.property.PropertyDouble;
 import modelgen.data.property.PropertyManager;
 import modelgen.data.raw.RawDataChunk;
 import modelgen.data.raw.RawDataChunkGrouped;
@@ -14,9 +16,10 @@ import modelgen.shared.Logger;
 import modelgen.shared.Util;
 
 public class DiscretizeDataByDerivativeCluster extends DiscretizeDataByStabilityCluster {
-    final private Integer VALUE_BASE_COST = 5;
+    final private Integer VALUE_BASE_COST = 2;
     final private Integer MAX_UNIQUE_STATES = 20;
-    
+    final private double VAR_COEFF = 0.1;
+
     private RawDataChunk derivData;
 
     public DiscretizeDataByDerivativeCluster() {
@@ -27,9 +30,11 @@ public class DiscretizeDataByDerivativeCluster extends DiscretizeDataByStability
 
         valueBaseCost.setValue(VALUE_BASE_COST);
         maxUniqueStates.setValue(MAX_UNIQUE_STATES);
+        varCoefficient.setValue(VAR_COEFF);
 
         moduleProperties.put(valueBaseCost.getName(), valueBaseCost);
         moduleProperties.put(valueBaseCost.getName(), maxUniqueStates);
+        moduleProperties.put(varCoefficient.getName(), varCoefficient);
 
         propertyManager = new PropertyManager(moduleProperties, ERROR_PREFIX);
 
@@ -78,7 +83,30 @@ public class DiscretizeDataByDerivativeCluster extends DiscretizeDataByStability
     protected IState createState(ClusterPointValue stabilityData, Double start, Double end, int pointGroup) {
         double boundaryLow = stabilityData.getClusterMin();
         double boundaryHigh = stabilityData.getClusterMax();
-        IState curState = new StateContinousRange(inputName, pointGroup, start, end, boundaryLow, boundaryHigh);
+        
+        int i;
+        for (i = 0; i < inputData.size(); i ++) {
+            if (inputData.get(i).getTime().equals(start))
+                break;
+        }
+        IState curState = new StateContinousRange(inputName, pointGroup, start, end, boundaryLow, boundaryHigh,
+                inputData.get(i).getValue());
         return curState;
+    }
+
+    @Override
+    protected int costFunction() {
+        try {
+            if (stabilityPoints == null || inputType == ControlType.INPUT)
+                return -1;
+            
+            if (stabilityPoints.size() > maxUniqueStates.getValue())
+                return -1;
+
+            return stabilityPoints.size()*valueBaseCost.getValue();
+        } catch (NullPointerException e) {
+            Logger.errorLoggerTrace(ERROR_PREFIX + " Null pointer exception.", e);
+        }
+        return -1;
     }
 }

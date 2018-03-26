@@ -1,12 +1,8 @@
 package modelgen.data.state;
 
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
 
 import modelgen.data.DataType;
-import modelgen.data.pattern.DataComparable.DataEquality;
 import modelgen.data.raw.RawDataChunk;
 import modelgen.data.raw.RawDataPoint;
 
@@ -54,17 +50,19 @@ public class StateDMV extends State implements IState {
 
     @Override
     public String convertToGuardCondition() {
-        DecimalFormat df = new DecimalFormat();
-        df.setMaximumFractionDigits(2);
-        String output = "(" + signalName + "==" + df.format(value) + ")";
+        String output = "(" + signalName + "=" + convertToInt(value) + ")";
         return output;
     }
 
     @Override
     public String convertToAssignmentCondition() {
-        DecimalFormat df = new DecimalFormat();
-        df.setMaximumFractionDigits(2);
-        String output = signalName + ":=[" + df.format(value) + "]";
+        String output = signalName + ":=" + convertToInt(value);
+        return output;
+    }
+
+    @Override
+    public String convertToInitialCondition() {
+        String output = signalName + "=" + convertToInt(value);
         return output;
     }
 

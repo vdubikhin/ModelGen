@@ -3,23 +3,29 @@ package modelgen.data.state;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import modelgen.data.DataType;
 import modelgen.data.raw.RawDataChunk;
 import modelgen.data.raw.RawDataPoint;
+import modelgen.shared.Logger;
 
 public class StateContinousRange extends State implements IState {
     private Double lowerBound, upperBound;
+    private Double initialValue;
     
-    public StateContinousRange(String name, Integer id, Double start, Double end, Double lowBound, Double upperBound) {
+    public StateContinousRange(String name, Integer id, Double start, Double end, Double lowBound, Double upperBound,
+            Double initialValue) {
         super(name, id, start, end);
         this.lowerBound = lowBound;
         this.upperBound = upperBound;
+        this.initialValue = initialValue;
     }
 
     public StateContinousRange(StateContinousRange toCopy) {
-        this(toCopy.signalName, toCopy.stateId, toCopy.start, toCopy.end, toCopy.lowerBound, toCopy.upperBound);
+        this(toCopy.signalName, toCopy.stateId, toCopy.start, toCopy.end, toCopy.lowerBound, toCopy.upperBound,
+                toCopy.initialValue);
     }
 
     @Override
@@ -73,10 +79,47 @@ public class StateContinousRange extends State implements IState {
 
     @Override
     public String convertToAssignmentCondition() {
-        DecimalFormat df = new DecimalFormat();
-        df.setMaximumFractionDigits(2);
-        String output = signalName + "'" + ":=[" + df.format(lowerBound) + ", " + df.format(upperBound) + "]";
+        String output = signalName + ":=uniform(" + convertToInt(lowerBound) + "," + convertToInt(upperBound) + ")";
         return output;
     }
 
+    @Override
+    public String convertToInitialCondition() {
+        DecimalFormat df = new DecimalFormat();
+        df.setMaximumFractionDigits(2);
+        String output = signalName + "=" + convertToInt(initialValue);
+        return output;
+    }
+
+    @Override
+    public String convertToInitialRateCondition() {
+        DecimalFormat df = new DecimalFormat();
+        df.setMaximumFractionDigits(2);
+        String output = signalName + "=[" + convertToInt(lowerBound) + "," + convertToInt(upperBound) + "]";
+        return output;
+    }
+
+    @Override
+    public boolean mergeWith(IState state) {
+        try {
+            if (!canMergeWith(state))
+                return false;
+
+            Map.Entry<Double, Double> mergeStateStamp = state.getTimeStamp();
+            Double mergeStateStart = mergeStateStamp.getKey();
+            Double mergeStateEnd = mergeStateStamp.getValue();
+
+            if (mergeStateStart < start)
+                initialValue = ((StateContinousRange) state).initialValue;
+
+            start = Math.min(mergeStateStart, start);
+            end = Math.max(mergeStateEnd, end);
+            return true;
+        } catch (NullPointerException e) {
+            Logger.errorLoggerTrace(ERROR_PREFIX + " Null pointer exception.", e);
+        } catch (ClassCastException e) {
+            Logger.errorLoggerTrace(ERROR_PREFIX + " Can not merge states of different type.", e);
+        }
+        return false;
+    }
 }

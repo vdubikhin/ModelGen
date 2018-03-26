@@ -2,8 +2,10 @@ package modelgen.processor.discretization;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import modelgen.data.ControlType;
 import modelgen.data.complex.ClusterPointValue;
@@ -31,12 +33,15 @@ import modelgen.shared.clustering.ICluster;
 public class DiscretizeDataByStabilityCluster extends DataProcessor<StageDataState> implements IDataProcessor<StageDataState> {
     final private static String PD_VAR_COEFF = PD_PREFIX + "VAR_COEFF";
     final private static String PD_MAX_UNIQUE_VALUES = PD_PREFIX + "MAX_UNIQUE_VALUES";
+    final private static String PD_MIN_STABLE_DURATION = PD_PREFIX + "MIN_STABLE_DURATION";
 
-    final private double VAR_COEFF = 0.25;
+    final private double VAR_COEFF = 0.6;
+    final private double MIN_STABLE_DURATION = 0.8;
     final private Integer VALUE_BASE_COST = 3;
-    final private Integer MAX_UNIQUE_STATES = 3;
+    final private Integer MAX_UNIQUE_STATES = 20;
 
     PropertyDouble varCoefficient;
+    PropertyDouble minStableDuration;
     PropertyInteger maxUniqueStates;
 
     protected RawDataChunk inputData;
@@ -53,6 +58,9 @@ public class DiscretizeDataByStabilityCluster extends DataProcessor<StageDataSta
 
         varCoefficient = new PropertyDouble(PD_VAR_COEFF);
         varCoefficient.setValue(VAR_COEFF);
+
+        minStableDuration = new PropertyDouble(PD_MIN_STABLE_DURATION);
+        minStableDuration.setValue(MIN_STABLE_DURATION);
 
         valueBaseCost.setValue(VALUE_BASE_COST);
 
@@ -123,8 +131,40 @@ public class DiscretizeDataByStabilityCluster extends DataProcessor<StageDataSta
             if (stabilityPoints == null || inputType == ControlType.INPUT)
                 return -1;
             
-            if (stabilityPoints.size() > maxUniqueStates.getValue())
-                return -1;
+            if (stabilityPoints.size() > maxUniqueStates.getValue()) {
+                RawDataChunkGrouped groupedData = groupDataPoints(inputData, stabilityPoints);
+                List<IState> outputStates = createOutputStates(groupedData, stabilityPoints);
+
+                //Sort in descending order of state duration
+                outputStates.sort((s1, s2) -> (Double.compare(s2.getDuration(), s1.getDuration())));
+
+                double totalDuration = 0.0;
+                for (IState curState: outputStates)
+                    totalDuration += curState.getDuration();
+
+                double countedDuration = 0.0;
+                Set<Integer> uniqueStates = new HashSet<>();
+                for (IState curState: outputStates) {
+                    countedDuration += curState.getDuration();
+                    uniqueStates.add(curState.getId());
+                    if (totalDuration*minStableDuration.getValue() <= countedDuration)
+                        break;
+                }
+                
+//                System.out.println("states: " + uniqueStates + " totalDuration: " + totalDuration +
+//                        " countedDuration: " + countedDuration);
+                if (uniqueStates.size() > maxUniqueStates.getValue())
+                    
+                    return -1;
+                else {
+                    Map<Integer, ClusterPointValue> points = new HashMap<>();
+                    for (Integer id: uniqueStates) {
+                        if (stabilityPoints.containsKey(id))
+                            points.put(id, stabilityPoints.get(id));
+                    }
+                    stabilityPoints = points;
+                }
+            }
 
             return stabilityPoints.size()*valueBaseCost.getValue();
         } catch (NullPointerException e) {

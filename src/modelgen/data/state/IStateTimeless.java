@@ -15,4 +15,8 @@ public interface IStateTimeless extends Printable {
     String convertToGuardCondition();
 
     String convertToAssignmentCondition();
+
+    String convertToInitialCondition();
+
+    String convertToInitialRateCondition();
 }

@@ -32,10 +32,14 @@ public class LPNPlace {
         return postSet;
     }
 
-    public void setInit() {
+    public void setInitialized() {
         initialized = true;
     }
 
+    public boolean isInitialized() {
+        return initialized;
+    }
+    
     public String getName() {
         return placeName;
     }

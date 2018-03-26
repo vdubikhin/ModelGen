@@ -11,6 +11,8 @@ import java.util.TreeMap;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import modelgen.data.ControlType;
+import modelgen.data.DataType;
 import modelgen.data.model.LPNModel;
 import modelgen.data.model.LPNPlace;
 import modelgen.data.model.LPNTransition;
@@ -83,7 +85,7 @@ public class LPNConstructor {
                     modelTransitions.put(patternVector, transitionList);
                     modelPlaces.put(patternVector, placeList);
                 }
-
+                model.setSignalType(signalRule.getOutputState().getSignalName(), ControlType.OUTPUT);
             }
 
             Map<Integer, List<LPNTransition>> patternVectorPreSet = new HashMap<>();
@@ -131,7 +133,9 @@ public class LPNConstructor {
                 return null;
             }
 
-            model.print();
+            model.printDOT();
+            System.out.println("--------------");
+            model.printLPN();
 
             return model;
         } catch (ArrayIndexOutOfBoundsException e) {
@@ -181,7 +185,7 @@ public class LPNConstructor {
         }
 
         for (LPNPlace place: placeConnections.keySet()) {
-            place.setInit();
+            place.setInitialized();
 
             //If only one transition no synchronization needed
             if (placeConnections.get(place).size() == 1) {
@@ -330,6 +334,9 @@ public class LPNConstructor {
                 firstPlace = place;
 
             StateVector curVector = sortedPatternVector.get(key);
+
+            for (String signal: curVector.keySet())
+                model.setSignalType(signal, ControlType.INPUT);
 
             addGuardConditions(signalRule.getOutputState(), curVector, transition);
 

@@ -213,6 +213,11 @@ public class RuleFSMVector implements RuleComparable<PatternVector, RuleFSMVecto
 
             outputPatterns = new HashMap<>();
             for (DataPattern curPattern: rulePatterns) {
+                //TODO: Corner case - only one pattern present in system so no rule mining is available
+                //Construct model from full vector trace
+                if (curPattern.getRuleVector().isEmpty())
+                    curPattern.setRuleVector(curPattern.getFullRuleVector());
+
                 outputPatterns.put(curPattern.getFullRuleVector().getId(), curPattern);
             }
 

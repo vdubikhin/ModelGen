@@ -3,7 +3,6 @@ package modelgen.data.stage;
 import java.util.List;
 
 import modelgen.data.ControlType;
-import modelgen.data.raw.RawDataChunk;
 import modelgen.data.raw.RawDataChunkGrouped;
 import modelgen.data.state.IState;
 

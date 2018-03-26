@@ -13,12 +13,23 @@ public abstract class State implements IState {
     protected String signalName;
     protected Integer stateId;
     protected Double start, end;
+    protected Integer scaleCoeff;
 
     protected State(String name, Integer id, Double start, Double end) {
         this.signalName = name;
         this.stateId = id;
         this.start = start;
         this.end = end;
+        
+        //TODO: define as constant for now
+        scaleCoeff = 1000;
+    }
+
+    protected Integer convertToInt(Double value) {
+        if (value == null)
+            return null;
+
+        return new Double (value*scaleCoeff).intValue();
     }
 
     @Override
@@ -126,5 +137,10 @@ public abstract class State implements IState {
             return DataEquality.UNIQUE;
         else
             return DataEquality.EQUAL;
+    }
+
+    @Override
+    public String convertToInitialRateCondition() {
+        return null;
     }
 }
