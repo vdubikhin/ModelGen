@@ -43,7 +43,7 @@ public class PropertyManager implements PropertySettable {
                 IProperty temp = (IProperty) propertyClass.cast(propertyToUse);
                 //HACK: assign value to itself to check if we have collection that holds values of the declared type
                 if (temp.setValue(temp.getValue())) {
-                    propertyToSet = temp;
+                    propertyToSet.setValue(temp.getValue());
                     return true;
                 }
                 Logger.errorLogger(errorPrefix + " Failure to set property " + propertyToSet.getName());

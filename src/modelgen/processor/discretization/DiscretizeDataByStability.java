@@ -142,7 +142,7 @@ public class DiscretizeDataByStability extends DataProcessor<StageDataState> imp
     }
 
     @Override
-    public int processCost() {
+    public double processCost() {
         try {
             if (stabilityValues != null)
                 return costFunction();
@@ -298,7 +298,7 @@ public class DiscretizeDataByStability extends DataProcessor<StageDataState> imp
                 else
                     end = inputData.get(i).getTime();
 
-                IState curState = new StateDMV(inputName, pointGroup, start, end, stabValue);
+                IState curState = new StateDMV(inputName, start, end, stabValue);
 
                 outputStates.add(curState);
                 groupedData.add(groupedPoint);

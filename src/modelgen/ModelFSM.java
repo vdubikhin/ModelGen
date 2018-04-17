@@ -70,9 +70,9 @@ public class ModelFSM {
             dataIn.add(packedData);
         }
 
-        List<Entry<StageDataState, Integer>> dataOut = discretizeData.processData(dataIn);
+        List<Entry<StageDataState, Double>> dataOut = discretizeData.processData(dataIn);
         List<StageDataState> dataIn2 = new ArrayList<>();
-        for (Entry<StageDataState, Integer> entry: dataOut) {
+        for (Entry<StageDataState, Double> entry: dataOut) {
             if (entry.getKey().getStates() != null) {
                 System.out.println("Signal: " + entry.getKey().getName() + " Cost: " + entry.getValue() + " Size: " +
                         entry.getKey().getStates().size());
@@ -98,7 +98,7 @@ public class ModelFSM {
         dataOut = filterData.processData(dataIn2);
         dataIn2.clear();
         
-        for (Entry<StageDataState, Integer> entry: dataOut) {
+        for (Entry<StageDataState, Double> entry: dataOut) {
             if (entry.getKey().getStates() != null) {
                 System.out.println("Signal: " + entry.getKey().getName() + " Cost: " + entry.getValue() + " Size: " +
                         entry.getKey().getStates().size());
@@ -119,7 +119,7 @@ public class ModelFSM {
 
         
         Map<String, List<IState>> discreteStates = new HashMap<String, List<IState>>();
-        for (Entry<StageDataState, Integer> entry: dataOut) {
+        for (Entry<StageDataState, Double> entry: dataOut) {
             StageDataState data = entry.getKey();
             discreteStates.put(data.getName(), data.getStates());
         }
@@ -127,8 +127,8 @@ public class ModelFSM {
         Map<String, RawDataChunk> generatedData = generateWaveform(rawData, discreteStates);
         dumpWaveform("GeneratedData", generatedData);
         
-        if (true)
-            return false;
+//        if (true)
+//            return false;
         System.out.println("--------------");
         RuleMiningFSM ruleMiningStage = new RuleMiningFSM();
         List<StageDataRule> dataIn3 = ruleMiningStage.processData(dataIn2);
@@ -137,6 +137,9 @@ public class ModelFSM {
 //        printVectors(dataIn3.getSignalPatterns(), false);
         
 //        ConflictDetector dataRules = new ConflictDetector(dataIn3);
+        
+//        if (true)
+//            return false;
         
         System.out.println("--------------");
         LPNSynthesisFSM lpnSynthesis = new LPNSynthesisFSM();

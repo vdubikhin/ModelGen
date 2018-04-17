@@ -21,9 +21,9 @@ public class FilterDataByPattern extends FilterDataBase implements IDataProcesso
     final private static String PD_WINDOW_SIZE_RATIO = PD_PREFIX + "WINDOW_SIZE_RATIO";
     final private static String PD_PATTERN_SIZE = PD_PREFIX + "PATTERN_SIZE";
 
-    final private Integer VALUE_BASE_COST = 8;
-    final private Integer PATTERN_SIZE = 1;
-    final private Double WINDOW_SIZE_RATIO = 0.05;
+    final private Integer VALUE_BASE_COST = 10;
+    final private Integer PATTERN_SIZE = 2;
+    final private Double WINDOW_SIZE_RATIO = 0.1;
 
     PropertyInteger patternSize;
     PropertyDouble windowSizeRatio;
@@ -91,10 +91,11 @@ public class FilterDataByPattern extends FilterDataBase implements IDataProcesso
         }
 
         Double weightFunction(double duration) {
-            if (size() > 1)
-                return duration/(size() - 1);
-            else
-                return duration;
+            return duration * Math.pow(1.5,-size());
+//            if (size() > 1)
+//                return duration/(size() - 1);
+//            else
+//                return duration;
         }
 
         Double getWeight() {
@@ -124,7 +125,7 @@ public class FilterDataByPattern extends FilterDataBase implements IDataProcesso
                     totalDuration += state.getDuration();
                 }
             }
-            
+
             weight = weightFunction(totalDuration);
             return weight;
         }
@@ -187,20 +188,21 @@ public class FilterDataByPattern extends FilterDataBase implements IDataProcesso
     }
     
     @Override
-    public int processCost() {
+    public double processCost() {
         try {
             if (inputStates == null || inputStates.isEmpty())
                 return -1;
 
             if (filteredStates != null)
-                return costFunction();
+                return costFunction(filteredStates, inputStates, inputData);
 
             final int totalEvents = inputStates.size();
             final int windowSize = (int) Math.ceil(totalEvents * windowSizeRatio.getValue());
 
             filteredStates = new ArrayList<>();
 
-            System.out.println("windowSize: " + windowSize);
+            //TODO: remove debug print
+//            System.out.println("windowSize: " + windowSize);
 
             for (int i = 0; i < totalEvents; i++) {
                 int lowB = Math.max(0, i - windowSize/2);
@@ -227,7 +229,8 @@ public class FilterDataByPattern extends FilterDataBase implements IDataProcesso
                 if (maxPattern.contains(inputStates.get(i).getId()))
                     filteredStates.add(inputStates.get(i));
 
-                System.out.println(maxPattern + " weight: " + maxPattern.getWeight());
+                //TODO: remove debug print
+//                System.out.println(maxPattern + " weight: " + maxPattern.getWeight());
             }
 
 
@@ -237,19 +240,12 @@ public class FilterDataByPattern extends FilterDataBase implements IDataProcesso
             if (filteredStates == null)
                 Logger.errorLogger(ERROR_PREFIX + " Failed to filter signal: " + inputName);
 
-            return costFunction();
+            return costFunction(filteredStates, inputStates, inputData);
         } catch (ArrayIndexOutOfBoundsException e) {
             Logger.errorLoggerTrace(ERROR_PREFIX + " Array out of bounds exception.", e);
         } catch (NullPointerException e) {
             Logger.errorLoggerTrace(ERROR_PREFIX + " Null pointer exception.", e);
         }
-        return -1;
-    }
-
-    private int costFunction() throws NullPointerException {
-        if (filteredStates != null)
-            return filteredStates.size() * valueBaseCost.getValue();
-
         return -1;
     }
 

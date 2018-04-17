@@ -39,6 +39,9 @@ public class TestModelFSM {
 //        signals.put("power_in", ControlType.INPUT);
 //        signals.put("gp_ack_bus[0]", ControlType.INPUT);
 
+//        String fileName = "sine_counter.csv";
+//        signals.put("CounterPos", ControlType.OUTPUT);
+//        signals.put("Sine", ControlType.INPUT);
         
         URL url = TestModelFSM.class.getClassLoader().getResource(fileName);
 

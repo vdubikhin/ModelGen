@@ -15,16 +15,16 @@ public class StateContinousRange extends State implements IState {
     private Double lowerBound, upperBound;
     private Double initialValue;
     
-    public StateContinousRange(String name, Integer id, Double start, Double end, Double lowBound, Double upperBound,
+    public StateContinousRange(String name, Double start, Double end, Double lowBound, Double upperBound,
             Double initialValue) {
-        super(name, id, start, end);
+        super(name, Double.hashCode(lowBound + upperBound), start, end);
         this.lowerBound = lowBound;
         this.upperBound = upperBound;
         this.initialValue = initialValue;
     }
 
     public StateContinousRange(StateContinousRange toCopy) {
-        this(toCopy.signalName, toCopy.stateId, toCopy.start, toCopy.end, toCopy.lowerBound, toCopy.upperBound,
+        this(toCopy.signalName, toCopy.start, toCopy.end, toCopy.lowerBound, toCopy.upperBound,
                 toCopy.initialValue);
     }
 

@@ -25,7 +25,9 @@ import modelgen.data.state.IState;
 import modelgen.data.state.StateDMV;
 import modelgen.processor.DataProcessor;
 import modelgen.processor.IDataProcessor;
+import modelgen.processor.filtering.FilterDataByDurationCluster;
 import modelgen.shared.Logger;
+import modelgen.shared.Util;
 import modelgen.shared.clustering.AgglomerativeClusteringMax;
 import modelgen.shared.clustering.ClusteringAlgorithm;
 import modelgen.shared.clustering.ICluster;
@@ -34,22 +36,28 @@ public class DiscretizeDataByStabilityCluster extends DataProcessor<StageDataSta
     final private static String PD_VAR_COEFF = PD_PREFIX + "VAR_COEFF";
     final private static String PD_MAX_UNIQUE_VALUES = PD_PREFIX + "MAX_UNIQUE_VALUES";
     final private static String PD_MIN_STABLE_DURATION = PD_PREFIX + "MIN_STABLE_DURATION";
+    final private static String PD_DISTRIBUTION_PEAK = PD_PREFIX + "DISTRIBUTION_PEAK";
 
-    final private double VAR_COEFF = 0.6;
+    final private double VAR_COEFF = 0.25;
     final private double MIN_STABLE_DURATION = 0.8;
     final private Integer VALUE_BASE_COST = 3;
-    final private Integer MAX_UNIQUE_STATES = 20;
+    final private Integer MAX_UNIQUE_STATES = 15;
+    final private Double DISTRIBUTION_PEAK = 0.65;
 
     PropertyDouble varCoefficient;
     PropertyDouble minStableDuration;
     PropertyInteger maxUniqueStates;
+    PropertyDouble filterDistributionPeak;
 
     protected RawDataChunk inputData;
     protected ControlType inputType;
     protected String inputName;
 
-    protected Map<Integer, ClusterPointValue> stabilityPoints;
-    
+    protected List<ClusterPointValue> stabilityPoints;
+    private Map<Integer, ClusterPointValue> stabilityPointsStateMap;
+    protected StageDataState output;
+    protected Double cost;
+
     public DiscretizeDataByStabilityCluster() {
         ERROR_PREFIX = "DataProcessor: DiscretizeDataByStabilityCluster error. ";
         DEBUG_PREFIX = "DataProcessor: DiscretizeDataByStabilityCluster debug. ";
@@ -66,9 +74,13 @@ public class DiscretizeDataByStabilityCluster extends DataProcessor<StageDataSta
 
         maxUniqueStates = new PropertyInteger(PD_MAX_UNIQUE_VALUES);
         maxUniqueStates.setValue(MAX_UNIQUE_STATES);
-        
+
+        filterDistributionPeak = new PropertyDouble(PD_DISTRIBUTION_PEAK);
+        filterDistributionPeak.setValue(DISTRIBUTION_PEAK);
+
         Properties moduleProperties = propertyManager.getModuleProperties();
         moduleProperties.put(varCoefficient.getName(), varCoefficient);
+        moduleProperties.put(filterDistributionPeak.getName(), filterDistributionPeak);
 
         propertyManager = new PropertyManager(moduleProperties, ERROR_PREFIX);
     }
@@ -81,13 +93,13 @@ public class DiscretizeDataByStabilityCluster extends DataProcessor<StageDataSta
     }
 
     @Override
-    public int processCost() {
+    public double processCost() {
         return processCost(inputData);
     }
     
-    protected int processCost(RawDataChunk data) {
+    protected double processCost(RawDataChunk data) {
         try {
-            if (data == null || inputType == ControlType.INPUT)
+            if (data == null)
                 return -1;
 
             if (stabilityPoints != null)
@@ -97,15 +109,7 @@ public class DiscretizeDataByStabilityCluster extends DataProcessor<StageDataSta
 
             ClusteringAlgorithm<ClusterPointValue> clusterAlgorithm = new AgglomerativeClusteringMax<>();
             ICluster<ClusterPointValue> root = clusterAlgorithm.formDendrogram(clusterPointArray);
-            List<ClusterPointValue> stabilityPointsArray = clusterAlgorithm.layerSearch(root, varCoefficient.getValue());
-
-            if (stabilityPointsArray == null)
-                return -1;
-
-            stabilityPoints = new HashMap<>();
-            for (int i = 0; i < stabilityPointsArray.size(); i++) {
-                stabilityPoints.put(i + 1, stabilityPointsArray.get(i));
-            }
+            stabilityPoints = clusterAlgorithm.layerSearch(root, varCoefficient.getValue());
 
             return costFunction();
         } catch (ArrayIndexOutOfBoundsException e) {
@@ -126,51 +130,78 @@ public class DiscretizeDataByStabilityCluster extends DataProcessor<StageDataSta
         return clusterPointArray;
     }
 
-    protected int costFunction() {
+    protected double costFunction() {
         try {
-            if (stabilityPoints == null || inputType == ControlType.INPUT)
+            if (cost != null)
+                return cost;
+
+            if (stabilityPoints == null)
                 return -1;
-            
-            if (stabilityPoints.size() > maxUniqueStates.getValue()) {
-                RawDataChunkGrouped groupedData = groupDataPoints(inputData, stabilityPoints);
-                List<IState> outputStates = createOutputStates(groupedData, stabilityPoints);
 
-                //Sort in descending order of state duration
-                outputStates.sort((s1, s2) -> (Double.compare(s2.getDuration(), s1.getDuration())));
+            StageDataState result = createOutputData(inputData, stabilityPoints);
 
-                double totalDuration = 0.0;
-                for (IState curState: outputStates)
-                    totalDuration += curState.getDuration();
+            stabilityPointsStateMap = findStableStates(result);
 
-                double countedDuration = 0.0;
-                Set<Integer> uniqueStates = new HashSet<>();
-                for (IState curState: outputStates) {
-                    countedDuration += curState.getDuration();
-                    uniqueStates.add(curState.getId());
-                    if (totalDuration*minStableDuration.getValue() <= countedDuration)
-                        break;
-                }
-                
-//                System.out.println("states: " + uniqueStates + " totalDuration: " + totalDuration +
-//                        " countedDuration: " + countedDuration);
-                if (uniqueStates.size() > maxUniqueStates.getValue())
-                    
-                    return -1;
-                else {
-                    Map<Integer, ClusterPointValue> points = new HashMap<>();
-                    for (Integer id: uniqueStates) {
-                        if (stabilityPoints.containsKey(id))
-                            points.put(id, stabilityPoints.get(id));
-                    }
-                    stabilityPoints = points;
-                }
+            if (stabilityPointsStateMap == null) {
+                cost = -1.0;
+                return -1;
             }
 
-            return stabilityPoints.size()*valueBaseCost.getValue();
+            stabilityPoints = new ArrayList<>(stabilityPointsStateMap.values());
+
+            result = createOutputData(inputData, stabilityPoints);
+
+            if (result == null)
+                return -1;
+
+            RawDataChunk generatedData = Util.generateSignalFromStates(inputData, result.getStates());
+            Double difference = Util.compareWaveForms(inputData, generatedData);
+
+            if (difference >= 0.0)
+                output = result;
+
+            cost = difference * valueBaseCost.getValue() + valueBaseCost.getValue();
+            return cost;
         } catch (NullPointerException e) {
             Logger.errorLoggerTrace(ERROR_PREFIX + " Null pointer exception.", e);
         }
         return -1;
+    }
+
+    protected Map<Integer, ClusterPointValue> findStableStates(StageDataState data)
+            throws NullPointerException {
+        //Filter data
+        IDataProcessor<StageDataState> filter = new FilterDataByDurationCluster(data);
+        Properties filterProperties = new Properties();
+        filterProperties.put(filterDistributionPeak.getName(), filterDistributionPeak);
+
+        if (!filter.setModuleProperties(filterProperties)) {
+            Logger.errorLogger(ERROR_PREFIX + " Failed to set filter properties.");
+        }
+
+        StageDataState filteredData;
+        if (filter.processCost() > 0)
+            filteredData = filter.processData();
+        else
+            return null;
+
+        if (filteredData == null)
+            return null;
+
+        Set<Integer> uniqueStates = new HashSet<>();
+        for (IState curState: filteredData.getStates())
+            uniqueStates.add(curState.getId());
+
+        if (uniqueStates.size() > maxUniqueStates.getValue())
+            return null;
+
+        Map<Integer, ClusterPointValue> points = new HashMap<>();
+        for (Integer id: uniqueStates) {
+            if (stabilityPointsStateMap.containsKey(id))
+                points.put(id, stabilityPointsStateMap.get(id));
+        }
+
+        return points;
     }
 
     @Override
@@ -180,16 +211,16 @@ public class DiscretizeDataByStabilityCluster extends DataProcessor<StageDataSta
 
     protected StageDataState processData(RawDataChunk data) {
         try {
+            if (output != null)
+                return output;
+
             if (data == null)
                 return null;
 
             if (costFunction() < 0)
                 return null;
 
-            RawDataChunkGrouped groupedData = groupDataPoints(data, stabilityPoints);
-            List<IState> outputStates = createOutputStates(groupedData, stabilityPoints);
-
-            StageDataState result = new StageDataState(groupedData, inputName, inputType, outputStates);
+            StageDataState result = createOutputData(inputData, stabilityPoints);
 
             return result;
         } catch (ArrayIndexOutOfBoundsException e) {
@@ -199,34 +230,28 @@ public class DiscretizeDataByStabilityCluster extends DataProcessor<StageDataSta
         }
         return null;
     }
-    
-    protected RawDataChunkGrouped groupDataPoints(RawDataChunk data, Map<Integer, ClusterPointValue> stabilityData)
+
+    protected ClusterPointValue getClosestCluster(RawDataPoint point, List<ClusterPointValue> stabilityData)
                                                   throws NullPointerException, ArrayIndexOutOfBoundsException {
-        RawDataChunkGrouped groupedData = new RawDataChunkGrouped();
-        for (RawDataPoint point: data) {
-
-            Integer pointGroup = -1;
-            double minDistance = 0;
-
-            for (Integer curGroup: stabilityData.keySet()) {
-                ClusterPointValue clusterPoint = stabilityData.get(curGroup);
-                double distance = Math.abs(clusterPoint.getClusterCenter() - point.getValue());
-                
-                if (pointGroup < 0 || distance < minDistance) {
-                    minDistance = distance;
-                    pointGroup = curGroup;
-                }
+        double minDistance = Double.POSITIVE_INFINITY;
+        ClusterPointValue bestCluster = null;
+        for (ClusterPointValue cluster: stabilityData) {
+            double distance = Math.abs(cluster.getClusterCenter() - point.getValue());
+            
+            if (distance < minDistance) {
+                minDistance = distance;
+                bestCluster = cluster;
             }
-
-            RawDataPointGrouped groupedPoint = new RawDataPointGrouped(point, pointGroup);
-            groupedData.add(groupedPoint);
         }
-        return groupedData;
+        return bestCluster;
     }
-    
-    protected List<IState> createOutputStates(RawDataChunkGrouped data, Map<Integer, ClusterPointValue> stabilityData)
+
+    protected StageDataState createOutputData(RawDataChunk data, List<ClusterPointValue> stabilityData)
                                               throws NullPointerException, ArrayIndexOutOfBoundsException {
         List<IState> outputStates = new ArrayList<>();
+        RawDataChunkGrouped groupedData = new RawDataChunkGrouped();
+        stabilityPointsStateMap = new HashMap<>();
+
         for (int i = 0; i < data.size(); i++) {
             Double start, end;
             start = data.get(i).getTime();
@@ -235,18 +260,25 @@ public class DiscretizeDataByStabilityCluster extends DataProcessor<StageDataSta
             else
                 end = data.get(i).getTime();
 
-            int pointGroup = data.get(i).getGroup();
-            IState curState = createState(stabilityData.get(pointGroup), start, end, pointGroup);
-
+            ClusterPointValue cluster = getClosestCluster(data.get(i), stabilityData);
+            IState curState = createState(cluster, start, end);
             outputStates.add(curState);
+
+            stabilityPointsStateMap.put(curState.getId(), cluster);
+
+            RawDataPointGrouped groupedPoint = new RawDataPointGrouped(data.get(i), curState.getId());
+            groupedData.add(groupedPoint);
         }
+
         Mergeable.mergeEntries(outputStates);
-        return outputStates;
+
+        StageDataState result = new StageDataState(groupedData, inputName, inputType, outputStates);
+        return result;
     }
 
-    protected IState createState(ClusterPointValue stabilityData, Double start, Double end, int pointGroup) {
-        double groupValue = stabilityData.getClusterCenter();
-        IState curState = new StateDMV(inputName, pointGroup, start, end, groupValue);
+    protected IState createState(ClusterPointValue stabilityData, Double start, Double end) {
+        IState curState = new StateDMV(inputName, start, end, stabilityData.getClusterMin(),
+                stabilityData.getClusterMax());
         return curState;
     }
 }

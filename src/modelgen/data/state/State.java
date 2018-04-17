@@ -49,7 +49,7 @@ public abstract class State implements IState {
 
     @Override
     public boolean increaseDuration(IState stateToUse) {
-        if (!signalName.equals(stateToUse.getSignalName()))
+        if (!getSignalName().equals(stateToUse.getSignalName()))
             return false;
 
         Map.Entry<Double, Double> mergeStateStamp = stateToUse.getTimeStamp();
@@ -126,14 +126,14 @@ public abstract class State implements IState {
     @Override
     public DataEquality compareTo(IState stateCmp) {
         //Operation undefined for states of different type
-        if (!this.getClass().equals(stateCmp.getClass()))
+        if (!getClass().equals(stateCmp.getClass()))
             return null;
 
         //Operation undefined for states of different signals
-        if (!signalName.equals(stateCmp.getSignalName()))
+        if (!getSignalName().equals(stateCmp.getSignalName()))
             return null;
 
-        if (stateId != stateCmp.getId())
+        if (getId().compareTo(stateCmp.getId()) != 0)
             return DataEquality.UNIQUE;
         else
             return DataEquality.EQUAL;

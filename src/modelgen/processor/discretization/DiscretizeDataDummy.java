@@ -33,11 +33,11 @@ public class DiscretizeDataDummy extends DataProcessor<StageDataState> implement
     }
     
     @Override
-    public int processCost() {
+    public double processCost() {
         if (inputData == null || inputType == ControlType.OUTPUT)
             return -1;
 
-        return Integer.MAX_VALUE;
+        return Double.MAX_VALUE;
     }
 
     @Override

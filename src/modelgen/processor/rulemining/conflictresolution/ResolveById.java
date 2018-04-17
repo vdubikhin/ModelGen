@@ -39,7 +39,7 @@ public class ResolveById extends DataProcessor<RuleComparable<PatternVector, Rul
     }
 
     @Override
-    public int processCost() {
+    public double processCost() {
         Integer vectorToFixId = conflictToResolve.getId();
         Integer dependancyVectorId = conflictToResolve.getOffendingVectorId();
 

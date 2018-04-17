@@ -46,7 +46,7 @@ public class RuleMiningFSM {
             if (conflicts == null)
                 return null;
 
-            List<Entry<RuleComparable<PatternVector, RuleFSMVector>, Integer>> dataOut = null;
+            List<Entry<RuleComparable<PatternVector, RuleFSMVector>, Double>> dataOut = null;
             while (!conflicts.isEmpty() && safeLimit++ <= 50) {
                 List<ConflictComparable<PatternVector, RuleFSMVector>> conflictList = new ArrayList<>();
 
@@ -56,14 +56,15 @@ public class RuleMiningFSM {
                 }
 
                 dataOut = conflictResolver.processData(conflictList);
+                //TODO: add check for dataOut
                 conflicts = dataRules.detectConflicts();
                 
                 System.out.println("Iteration: " + safeLimit);
                 
-                for (RuleComparable<PatternVector, RuleFSMVector> entry: dataRules.getStageRules()) {
-                    //TODO: debug print
-                    entry.print();
-                }
+//                for (RuleComparable<PatternVector, RuleFSMVector> entry: dataRules.getStageRules()) {
+//                    //TODO: debug print
+//                    entry.print();
+//                }
             }
 
             List<RuleFSMVector> resolvedRules = dataRules.getStageRules();

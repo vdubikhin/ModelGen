@@ -15,4 +15,8 @@ public class RawDataThreshold {
     public Double getUpperBound() {
         return upperBound;
     }
+
+    public Double getCenter() {
+        return (lowBound + upperBound)/2;
+    }
 }

@@ -16,6 +16,75 @@ import modelgen.data.state.IState;
 public final class Util {
 
     private Util() {};
+
+    static public RawDataChunk generateSignalFromStates(RawDataChunk originalSignal, List<IState> states) {
+        final String ERROR_PREFIX = "Wave generator error.";
+        try {
+            RawDataChunk generatedData = new RawDataChunk();
+            if (states != null) {
+                for (IState state: states) {
+                    generatedData.addAll(state.generateSignal(originalSignal));
+                }
+            } else
+                return null;
+
+            //Remove duplicates by time
+            Map<Double, RawDataPoint> map = new HashMap<>();
+            for (RawDataPoint point : generatedData)
+              map.put(point.getTime(), point);
+
+            generatedData.clear();
+            generatedData.addAll(map.values());
+
+            //Sort ascending
+            generatedData.sort((p1, p2) -> Double.compare(p1.getTime(), p2.getTime()));
+
+            return generatedData;
+        } catch (ArrayIndexOutOfBoundsException e) {
+            Logger.errorLoggerTrace(ERROR_PREFIX + " Array out of bounds exception.", e);
+        } catch (NullPointerException e) {
+            Logger.errorLoggerTrace(ERROR_PREFIX + " Null pointer exception.", e);
+        }
+        return null;
+    }
+
+    static public Double compareWaveForms(RawDataChunk originalWaveForm, RawDataChunk generatedWaveForm) {
+        final String ERROR_PREFIX = "Wave form comparison error.";
+        final double ABSOLUTE_TOLERANCE = 0.001;
+        try {
+            if (originalWaveForm == null || generatedWaveForm == null) {
+                Logger.errorLogger(ERROR_PREFIX + " Wave form does not exist.");
+                return -1.0;
+            }
+
+            if (originalWaveForm.size() != generatedWaveForm.size()) {
+                Logger.errorLogger(ERROR_PREFIX + " Waves size does not match.");
+                return -1.0;
+            }
+
+            Double difference = 0.0;
+            for (int i = 0; i < originalWaveForm.size(); i++) {
+                //If timesteps differ operation is undefined
+                if (!originalWaveForm.get(i).getTime().equals(generatedWaveForm.get(i).getTime()))
+                        return -1.0;
+
+                Double curDifference = Math.abs(originalWaveForm.get(i).getValue()
+                        - generatedWaveForm.get(i).getValue());
+
+                if (originalWaveForm.get(i).getValue() < ABSOLUTE_TOLERANCE)
+                    difference += curDifference;
+                else
+                    difference += Math.abs(curDifference/originalWaveForm.get(i).getValue());
+            }
+
+            return difference;
+        } catch (ArrayIndexOutOfBoundsException e) {
+            Logger.errorLoggerTrace(ERROR_PREFIX + " Array out of bounds exception.", e);
+        } catch (NullPointerException e) {
+            Logger.errorLoggerTrace(ERROR_PREFIX + " Null pointer exception.", e);
+        }
+        return -1.0;
+    }
     
     static public Map<String, RawDataChunk> parseCSVFile(String fileName) {
         BufferedReader br = null;

@@ -48,7 +48,7 @@ public class ResolveByAnalog extends DataProcessor<RuleComparable<PatternVector,
     }
 
     @Override
-    public int processCost() {
+    public double processCost() {
         try {
             int vectorId = conflictToResolve.getId();
             RuleFSMVector ruleToFix = conflictToResolve.getRuleToFix();
@@ -67,6 +67,8 @@ public class ResolveByAnalog extends DataProcessor<RuleComparable<PatternVector,
             if (stateVector.keySet().containsAll(rawData.keySet()))
                 return -1;
 
+            //TODO: add additional check if analog data can be discretized
+            
             return valueBaseCost.getValue();
         } catch (ArrayIndexOutOfBoundsException e) {
             Logger.errorLoggerTrace(ERROR_PREFIX + " Array out of bounds exception.", e);
@@ -89,13 +91,15 @@ public class ResolveByAnalog extends DataProcessor<RuleComparable<PatternVector,
             if (processCost() < 0)
                 return null;
 
-            StateVector stateVector = vectorToFix.values().iterator().next();
+            StateVector stateVector = null;
+            if (!vectorToFix.isEmpty())
+                stateVector = vectorToFix.values().iterator().next();
 
             for (String signal: rawData.keySet()) {
                 RawDataChunk curAnalogChunk = rawData.get(signal);
 
                 //Discretize data not contained in state vector and add it to full vector
-                if (!stateVector.containsKey(signal)) {
+                if (stateVector == null || !stateVector.containsKey(signal)) {
                     StageDataRaw dataRaw = new StageDataRaw(curAnalogChunk, signal, ControlType.INPUT);
                     IDataProcessor<StageDataState> discretizationProcessor = new DiscretizeDataByNumStates(dataRaw);
                     if (discretizationProcessor.processCost() > 0) {

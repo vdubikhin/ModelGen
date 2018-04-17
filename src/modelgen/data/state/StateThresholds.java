@@ -10,13 +10,13 @@ import modelgen.shared.Logger;
 public class StateThresholds extends State implements IState {
     RawDataThreshold thresholds;
 
-    public StateThresholds(String name, Integer id, Double start, Double end, Double lowBound, Double upperBound) {
-        super(name, id, start, end);
+    public StateThresholds(String name, Double start, Double end, Double lowBound, Double upperBound) {
+        super(name, Double.hashCode(lowBound + upperBound), start, end);
         thresholds = new RawDataThreshold(lowBound, upperBound);
     }
 
     public StateThresholds(StateThresholds toCopy) {
-        this(toCopy.signalName, toCopy.stateId, toCopy.start, toCopy.end, toCopy.thresholds.getLowBound(),
+        this(toCopy.signalName, toCopy.start, toCopy.end, toCopy.thresholds.getLowBound(),
                 toCopy.thresholds.getUpperBound());
     }
 
@@ -63,6 +63,14 @@ public class StateThresholds extends State implements IState {
             if (stateCmpThresholds.getUpperBound() > thresholds.getLowBound() &&
                     stateCmpThresholds.getUpperBound() < thresholds.getUpperBound())
                 return DataEquality.SUBSET;
+
+            if (thresholds.getLowBound() > stateCmpThresholds.getLowBound() &&
+                    thresholds.getLowBound() < stateCmpThresholds.getUpperBound())
+                return DataEquality.SUPERSET;
+
+            if (thresholds.getUpperBound() > stateCmpThresholds.getLowBound() &&
+                    thresholds.getUpperBound() < stateCmpThresholds.getUpperBound())
+                return DataEquality.SUPERSET;
 
             if  (stateCmpThresholds.getLowBound().equals(thresholds.getLowBound()) &&
                     stateCmpThresholds.getUpperBound().equals(thresholds.getUpperBound()))

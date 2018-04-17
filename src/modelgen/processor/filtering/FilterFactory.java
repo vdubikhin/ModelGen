@@ -9,7 +9,7 @@ public class FilterFactory extends DataProcessorFactory<StageDataState, StageDat
                            implements IDataProcessorFactory<StageDataState, StageDataState> {
     public FilterFactory() {
         try {
-//            processorClasses.put(FilterDataByDurationCluster.class.newInstance().getName(), FilterDataByDurationCluster.class);
+            processorClasses.put(FilterDataByDurationCluster.class.newInstance().getName(), FilterDataByDurationCluster.class);
             processorClasses.put(FilterDataByPattern.class.newInstance().getName(), FilterDataByPattern.class);
             processorClasses.put(FilterDataDummy.class.newInstance().getName(), FilterDataDummy.class);
             inputDataClass = StageDataState.class;

@@ -59,7 +59,7 @@ abstract class DataManager<T, S> implements IDataManager<T, S>, PropertySettable
     }
 
     @Override
-    public Map.Entry<S, Integer> processData(T inputData, IDataProcessorFactory<T, S> processorFactory) {
+    public Map.Entry<S, Double> processData(T inputData, IDataProcessorFactory<T, S> processorFactory) {
         try {
             Set<String> factoryProcessorsNames = processorFactory.getProcessorNames();
             Set<String> managerProcessorsNames = processorNames.getValue();
@@ -100,14 +100,14 @@ abstract class DataManager<T, S> implements IDataManager<T, S>, PropertySettable
 
             //Use sorted processors list to process data
             for (IDataProcessor<S> processor: sortedProcessors) {
-                Integer cost = processor.processCost();
+                Double cost = processor.processCost();
                 //Negative or zero cost means processor can not be applied
                 if (cost > 0) {
                     S output = processor.processData();
                     if (output != null) {
                         Logger.debugPrintln(DEBUG_PREFIX + " Using processor: " + processor.getName() + " Cost: "
                                             + cost, debugPrint.getValue());
-                        return new AbstractMap.SimpleEntry<S, Integer>(output, cost);
+                        return new AbstractMap.SimpleEntry<S, Double>(output, cost);
                     }
                 }
             }

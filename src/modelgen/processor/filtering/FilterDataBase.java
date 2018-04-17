@@ -4,13 +4,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 import modelgen.data.ControlType;
+import modelgen.data.raw.RawDataChunk;
 import modelgen.data.raw.RawDataChunkGrouped;
+import modelgen.data.raw.RawDataPoint;
 import modelgen.data.raw.RawDataPointGrouped;
 import modelgen.data.stage.StageDataState;
 import modelgen.data.state.IState;
 import modelgen.processor.DataProcessor;
 import modelgen.processor.IDataProcessor;
 import modelgen.shared.Logger;
+import modelgen.shared.Util;
 
 abstract class FilterDataBase extends DataProcessor<StageDataState> implements IDataProcessor<StageDataState> {
 
@@ -67,4 +70,26 @@ abstract class FilterDataBase extends DataProcessor<StageDataState> implements I
         StageDataState result = new StageDataState(outputData, inputName, inputType, filteredStates);
         return result;
     }
+
+    //XXX: should represent precision loss??
+    protected double costFunction(List<IState> filteredStates, List<IState> inputStates, RawDataChunkGrouped inputData)
+            throws NullPointerException {
+        if (filteredStates != null) {
+            if (filteredStates.size() >= inputStates.size())
+                return -1;
+
+            RawDataChunk originalPoints = new RawDataChunk();
+            for (RawDataPoint point: inputData)
+                originalPoints.add(point);
+
+            RawDataChunk originalData = Util.generateSignalFromStates(originalPoints, inputStates);
+            RawDataChunk generatedData = Util.generateSignalFromStates(originalPoints, filteredStates);
+
+            Double difference = Util.compareWaveForms(originalData, generatedData);
+            
+            return difference/(inputStates.size() - filteredStates.size());
+        }
+        return -1;
+    }
+
 }

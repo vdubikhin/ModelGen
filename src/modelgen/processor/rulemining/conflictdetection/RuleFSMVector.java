@@ -152,14 +152,15 @@ public class RuleFSMVector implements RuleComparable<PatternVector, RuleFSMVecto
                     if (conflictType == RuleConflictType.RuleVsFullPattern)
                         vectorB = predicateVectorExtB.getFullRuleVector();
 
-                    ConflictComparable<PatternVector, RuleFSMVector> conflict = 
+                    ConflictComparable<PatternVector, RuleFSMVector> conflict =
                             new ConflictCSC(this, ruleToCmp, vectorA, vectorB, conflictType);
 
-                    System.out.println("Rule " + outputState.getSignalName() + "<" + outputState.getId() + ">: "
-                            + vectorA.getId() + " vs " + 
-                            "Rule " + ruleToCmp.outputState.getSignalName() + "<" + ruleToCmp.outputState.getId() + ">: " +
-                            vectorB.getId() + " - " + vectorA.compareTo(vectorB) + " - " + conflictType);
-                    
+                    //TODO: debug print
+//                    System.out.println("Rule " + outputState.getSignalName() + "<" + outputState.getId() + ">: "
+//                            + vectorA.getId() + " vs " + 
+//                            "Rule " + ruleToCmp.outputState.getSignalName() + "<" + ruleToCmp.outputState.getId() + ">: " +
+//                            vectorB.getId() + " - " + vectorA.compareTo(vectorB) + " - " + conflictType);
+
                     if (conflict.getRuleToFix() != null)
                         conflictsList.add(conflict);
                 }

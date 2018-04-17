@@ -6,7 +6,7 @@ public interface IDataProcessor<T> extends PropertySettable {
 
     String getName();
 
-    int processCost();
+    double processCost();
 
     T processData();
 }

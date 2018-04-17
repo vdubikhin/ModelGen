@@ -17,5 +17,5 @@ public interface IStage<I, O> extends PropertySettable {
 
     Properties getManagerProperties();
 
-    List<Entry<O, Integer>> processData(List<I> inputData);
+    List<Entry<O, Double>> processData(List<I> inputData);
 }

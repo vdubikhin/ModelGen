@@ -3,6 +3,7 @@ package modelgen.flow;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import modelgen.data.property.*;
 import modelgen.manager.IDataManager;
@@ -96,7 +97,7 @@ abstract class Stage<I, O> implements IStage<I, O> {
     }
 
     @Override
-    public List<Map.Entry<O, Integer>> processData(final List<I> inputData) {
+    public List<Entry<O, Double>> processData(final List<I> inputData) {
         try {
             if (inputData == null) {
                 Logger.errorLogger(ERROR_PREFIX + " Input data is not initialized.");
@@ -113,9 +114,9 @@ abstract class Stage<I, O> implements IStage<I, O> {
                 return null;
             }
 
-            List<Map.Entry<O, Integer>> returnData = new ArrayList<>();
+            List<Map.Entry<O, Double>> returnData = new ArrayList<>();
             for (I data: inputData) {
-                Map.Entry<O, Integer> result = dataManager.processData(data, processorFactory);
+                Map.Entry<O, Double> result = dataManager.processData(data, processorFactory);
                 if (result == null) {
                     Logger.errorLogger(ERROR_PREFIX + " Failed to process data.");
                     return null;

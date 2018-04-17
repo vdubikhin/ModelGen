@@ -25,7 +25,7 @@ public class ResolveByState extends DataProcessor<RuleComparable<PatternVector, 
     protected static final String PD_RESOLVE_COST_OUTPUT_STATE = PD_PREFIX + "RESOLVE_COST_OUTPUT_STATE";
 
     final private Integer RESOLVE_COST = 2;
-    final private Integer RESOLVE_COST_OUTPUT_STATE = 2;
+    final private Integer RESOLVE_COST_OUTPUT_STATE = 10;
 
     protected PropertyInteger valueBaseCostOutputState;
 
@@ -57,7 +57,7 @@ public class ResolveByState extends DataProcessor<RuleComparable<PatternVector, 
     }
 
     @Override
-    public int processCost() {
+    public double processCost() {
         try {
             int vectorId = conflictToResolve.getId();
             RuleFSMVector ruleToFix = conflictToResolve.getRuleToFix();
@@ -71,8 +71,13 @@ public class ResolveByState extends DataProcessor<RuleComparable<PatternVector, 
                 return -1;
 
             //If rule vector is empty then new states can be added
-            if (vectorToFix.isEmpty())
-                return valueBaseCost.getValue();
+            if (vectorToFix.isEmpty()) {
+                if (stateFull.size() == 1 && 
+                        stateFull.containsKey(ruleToFix.getOutputState().getSignalName()))
+                    return valueBaseCostOutputState.getValue();
+                else
+                    return valueBaseCost.getValue();
+            }
 
             StateVector stateToFix = vectorToFix.values().iterator().next();
 

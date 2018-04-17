@@ -98,8 +98,11 @@ public abstract class AgglomerativeClustering<T extends Cloneable<T> & Measurabl
                         outputLayer.add(cl);
                     } else {
                         List<Cluster<T>> children = cl.getChildren();
+                        //Either search among children or add cluster to the output
                         if (children != null && !children.isEmpty())
                             extraLayer.addAll(children);
+                        else
+                            outputLayer.add(cl);
                     }
                 }
                 searchLayer = extraLayer;

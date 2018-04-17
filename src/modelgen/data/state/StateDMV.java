@@ -5,24 +5,31 @@ import java.text.DecimalFormat;
 import modelgen.data.DataType;
 import modelgen.data.raw.RawDataChunk;
 import modelgen.data.raw.RawDataPoint;
+import modelgen.data.raw.RawDataThreshold;
 
 public class StateDMV extends State implements IState {
-    private Double value;
+    RawDataThreshold thresholds;
 
-    public StateDMV (String name, Integer id, Double start, Double end, Double value) {
-        super(name, id, start, end);
-        this.value = value;
+    public StateDMV (String name, Double start, Double end, Double lb, Double ub) {
+        super(name, Double.hashCode(lb + ub), start, end);
+        thresholds = new RawDataThreshold(lb, ub);
     }
-    
+
+    public StateDMV (String name, Double start, Double end, Double value) {
+        super(name, Double.hashCode(value), start, end);
+        thresholds = new RawDataThreshold(value, value);
+    }
+
     public StateDMV (StateDMV toCopy) {
-        this(toCopy.signalName, toCopy.stateId, toCopy.start, toCopy.end, toCopy.value);
+        this(toCopy.signalName, toCopy.start, toCopy.end, toCopy.thresholds.getLowBound(),
+                toCopy.thresholds.getUpperBound());
     }
     
     @Override
     public String convertToString() {
         DecimalFormat df = new DecimalFormat();
         df.setMaximumFractionDigits(2);
-        return "[    " + df.format(value) + "   ]";
+        return "[" + df.format(thresholds.getLowBound()) + ", " + df.format(thresholds.getUpperBound()) + "]";
     }
 
     @Override
@@ -38,10 +45,10 @@ public class StateDMV extends State implements IState {
     @Override
     public RawDataChunk generateSignal(RawDataChunk baseSignal) {
         RawDataChunk outputData = new RawDataChunk();
-        
+
         for (RawDataPoint curPoint: baseSignal) {
             if (start <= curPoint.getTime() && curPoint.getTime() <= end) {
-                RawDataPoint newPoint = new RawDataPoint(value, curPoint.getTime());
+                RawDataPoint newPoint = new RawDataPoint(thresholds.getCenter(), curPoint.getTime());
                 outputData.add(newPoint);
             }
         }
@@ -50,19 +57,24 @@ public class StateDMV extends State implements IState {
 
     @Override
     public String convertToGuardCondition() {
-        String output = "(" + signalName + "=" + convertToInt(value) + ")";
+        String output;
+        if (thresholds.getUpperBound().equals(thresholds.getLowBound()))
+            output = "(" + signalName + "=" + convertToInt(thresholds.getCenter()) + ")";
+        else
+            output = "~(" + signalName + ">=" + convertToInt(thresholds.getUpperBound()) + ")&(" + signalName + ">="
+                + convertToInt(thresholds.getLowBound()) + ")";
         return output;
     }
 
     @Override
     public String convertToAssignmentCondition() {
-        String output = signalName + ":=" + convertToInt(value);
+        String output = signalName + ":=" + convertToInt(thresholds.getCenter());
         return output;
     }
 
     @Override
     public String convertToInitialCondition() {
-        String output = signalName + "=" + convertToInt(value);
+        String output = signalName + "=" + convertToInt(thresholds.getCenter());
         return output;
     }
 

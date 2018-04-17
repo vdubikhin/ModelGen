@@ -44,7 +44,7 @@ public class ResolveByVector extends DataProcessor<RuleComparable<PatternVector,
     }
 
     @Override
-    public int processCost() {
+    public double processCost() {
         try {
             int vectorId = conflictToResolve.getId();
             RuleFSMVector ruleToFix = conflictToResolve.getRuleToFix();

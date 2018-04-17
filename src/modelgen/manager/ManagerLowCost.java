@@ -12,6 +12,6 @@ public class ManagerLowCost<T, S> extends DataManager<T, S> implements IDataMana
 
     @Override
     protected void sortDataProcessors(List<IDataProcessor<S>> processorsToSort) throws NullPointerException {
-        processorsToSort.sort((proc1, proc2) -> Integer.compare(proc1.processCost(), proc2.processCost()));
+        processorsToSort.sort((proc1, proc2) -> Double.compare(proc1.processCost(), proc2.processCost()));
     }
 }
