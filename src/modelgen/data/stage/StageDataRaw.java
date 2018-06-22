@@ -3,7 +3,7 @@ package modelgen.data.stage;
 import modelgen.data.ControlType;
 import modelgen.data.raw.RawDataChunk;
 
-public class StageDataRaw {
+public class StageDataRaw  implements IStageData {
     private RawDataChunk data;
     private String name;
     private ControlType type;

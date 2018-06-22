@@ -19,8 +19,8 @@ import modelgen.shared.Util;
 
 public class DiscretizeDataByDerivativeCluster extends DiscretizeDataByStabilityCluster {
     final private Integer VALUE_BASE_COST = 3;
-    final private Integer MAX_UNIQUE_STATES = 20;
-    final private double VAR_COEFF = 0.1;
+    final private Integer MAX_UNIQUE_STATES = 50;
+    final private double VAR_COEFF = 0.9;
 
     private RawDataChunk derivData;
 
@@ -119,7 +119,7 @@ public class DiscretizeDataByDerivativeCluster extends DiscretizeDataByStability
             if (stabilityPoints.size() > maxUniqueStates.getValue())
                 return -1;
 
-            StageDataState result = createOutputData(inputData, stabilityPoints);
+            StageDataState result = createOutputData(derivData, stabilityPoints);
 
             if (result == null)
                 return -1;

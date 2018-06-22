@@ -24,8 +24,8 @@ public class ResolveByState extends DataProcessor<RuleComparable<PatternVector, 
                             implements IDataProcessor<RuleComparable<PatternVector, RuleFSMVector>> {
     protected static final String PD_RESOLVE_COST_OUTPUT_STATE = PD_PREFIX + "RESOLVE_COST_OUTPUT_STATE";
 
-    final private Integer RESOLVE_COST = 2;
-    final private Integer RESOLVE_COST_OUTPUT_STATE = 10;
+    final private Integer RESOLVE_COST = 4;
+    final private Integer RESOLVE_COST_OUTPUT_STATE = 5;
 
     protected PropertyInteger valueBaseCostOutputState;
 

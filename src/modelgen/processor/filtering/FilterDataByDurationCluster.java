@@ -30,7 +30,7 @@ public class FilterDataByDurationCluster extends FilterDataBase implements IData
     final private static String PD_RELATIVE_THRESHOLD = PD_PREFIX + "RELATIVE_THRESHOLD";
 
     final private Integer VALUE_BASE_COST = 5;
-    final private Double DISTRIBUTION_PEAK = 0.7;
+    final private Double DISTRIBUTION_PEAK = 0.6;
     final private Double RELATIVE_THRESHOLD = 0.2;
 
     protected RawDataChunkGrouped inputData;
@@ -103,19 +103,24 @@ public class FilterDataByDurationCluster extends FilterDataBase implements IData
                 clusterPointArray = clusterAlgorithm.layerSearch(root, distributionPeak.getValue());
 
                 //Find cut off duration
-
+                //TODO: add parameter and think about it
                 for (ClusterPointNumbers cl: clusterPointArray) {
-//                    Logger.debugPrintln("Cl min: " + cl.getClusterMin() + " Cl max: " + cl.getClusterMax() + 
-//                            " Cl duration: " + cl.getClusterDuraion() + " Cl eval: " + cl.evaluate(), debugPrint.getValue());
-                    if (cl.evaluate() > clMaxDuration) {
+                    Logger.debugPrintln("Cl min: " + cl.getClusterMin() + " Cl max: " + cl.getClusterMax() + 
+                            " Cl duration: " + cl.getClusterDuraion() + " Cl eval: " + cl.evaluate(), debugPrint.getValue());
+                    if (cl.evaluate() > 0.20 && (minDuration > cl.getClusterMin() || minDuration < 0)) {
                         clMaxDuration = cl.evaluate();
                         minDuration = cl.getClusterMin();
                     }
+                    
+//                    if (cl.evaluate() > clMaxDuration) {
+//                        clMaxDuration = cl.evaluate();
+//                        minDuration = cl.getClusterMin();
+//                    }
                 }
             }
 
-//            Logger.debugPrintln("Signal " + inputName + " minDuration: " + minDuration +
-//                    " clMaxDuration: " + clMaxDuration + " Size: " + clusterPointArray.size(), debugPrint.getValue());
+            Logger.debugPrintln("Signal " + inputName + " minDuration: " + minDuration +
+                    " clMaxDuration: " + clMaxDuration + " Size: " + clusterPointArray.size(), debugPrint.getValue());
 
             //Use cut off duration to remove noise states
             filteredStates.clear();
@@ -124,9 +129,6 @@ public class FilterDataByDurationCluster extends FilterDataBase implements IData
                         || curState.getDuration() >= totalDuration * relativeThreshold.getValue())
                         && curState.getDuration() > 0.0)
                     filteredStates.add(curState);
-//                else
-//                    Logger.debugPrintln("Filtered state: " + curState.getSignalName() + " Id: " + curState.getId() +
-//                            " Duration: " + curState.getDuration(), debugPrint.getValue());
             }
 
             if (filteredStates.isEmpty())

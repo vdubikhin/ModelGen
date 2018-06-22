@@ -13,7 +13,7 @@ import modelgen.shared.Logger;
 
 public class ResolveById extends DataProcessor<RuleComparable<PatternVector, RuleFSMVector>>
                   implements IDataProcessor<RuleComparable<PatternVector, RuleFSMVector>> {
-    final private Integer RESOLVE_COST = 50;
+    final private Integer RESOLVE_COST = 20;
 
     private ConflictComparable<PatternVector, RuleFSMVector> conflictToResolve;
 

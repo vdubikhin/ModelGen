@@ -19,4 +19,8 @@ public interface IStateTimeless extends Printable {
     String convertToInitialCondition();
 
     String convertToInitialRateCondition();
+
+    void setScale(double scale);
+
+    Integer getScalePower();
 }

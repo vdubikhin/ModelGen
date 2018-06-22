@@ -13,7 +13,7 @@ public abstract class State implements IState {
     protected String signalName;
     protected Integer stateId;
     protected Double start, end;
-    protected Integer scaleCoeff;
+    private Double scaleCoeff;
 
     protected State(String name, Integer id, Double start, Double end) {
         this.signalName = name;
@@ -22,14 +22,27 @@ public abstract class State implements IState {
         this.end = end;
         
         //TODO: define as constant for now
-        scaleCoeff = 1000;
+        scaleCoeff = 10000.0;
+    }
+
+    protected static Integer generateStateId(Double value) {
+        return Double.hashCode(value) >> 15;
+    }
+
+    protected static Integer generateStateId(Double value1, Double value2) {
+        return Double.hashCode(value1 + value2) >> 15;
+    }
+
+    @Override
+    public void setScale(double scale) {
+        scaleCoeff = scale;
     }
 
     protected Integer convertToInt(Double value) {
         if (value == null)
             return null;
 
-        return new Double (value*scaleCoeff).intValue();
+        return new Double(value*scaleCoeff).intValue();
     }
 
     @Override

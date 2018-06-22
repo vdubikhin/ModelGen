@@ -40,7 +40,7 @@ public class LPNSynthesisFSM {
             }
 
             for (StageDataRule signalRules: signalsRules) {
-                String signalName = signalRules.getSignalName();
+                String signalName = signalRules.getName();
 
                 LPNModel model = new LPNModel();
                 LPNConstructor modelCreator = new LPNConstructor();

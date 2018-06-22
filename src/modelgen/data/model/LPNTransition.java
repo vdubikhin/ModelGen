@@ -12,7 +12,7 @@ import modelgen.data.state.IStateTimeless;
 
 public class LPNTransition {
     String transitionName;
-    Double delayLow, delayHigh;
+    Integer delayLow, delayHigh;
 
     boolean persistent;
     int priority;
@@ -29,8 +29,8 @@ public class LPNTransition {
         assignmentConditions = new ArrayList<>();
         preSet = new HashSet<>();
         postSet = new HashSet<>();
-        delayLow = 0.0;
-        delayHigh = 0.0;
+        delayLow = 0;
+        delayHigh = 0;
         persistent = false;
         priority = 1;
     }
@@ -45,11 +45,11 @@ public class LPNTransition {
         return persistent;
     }
     
-    public void setDelayLow(Double delay) {
+    public void setDelayLow(Integer delay) {
         delayLow = delay;
     }
 
-    public void setDelayHigh(Double delay) {
+    public void setDelayHigh(Integer delay) {
         delayHigh = delay;
     }
 
@@ -95,7 +95,7 @@ public class LPNTransition {
 
     public String getDelayLabel() {
         String output = null;
-        if (delayLow > 0.0 && delayHigh > 0.0) {
+        if (delayLow >= 0 && delayHigh >= 0) {
             if (delayLow.equals(delayHigh))
                 output = "<" + getName() + "=[" + delayLow +  "]>";
             else

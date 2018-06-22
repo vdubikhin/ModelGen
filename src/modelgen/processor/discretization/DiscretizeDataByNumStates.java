@@ -31,7 +31,7 @@ public class DiscretizeDataByNumStates extends ADataDiscretizer implements IData
     final private static String PD_DISTRIBUTION_PEAK = PD_PREFIX + "DISTRIBUTION_PEAK";
 
     final private Integer VALUE_BASE_COST = 50;
-    final private Integer NUM_STATES = 2;
+    final private Integer NUM_STATES = 1;
     final private Double THRESHOLD_TOLERANCE = 0.05;
     final private Double DISTRIBUTION_PEAK = 0.8;
 
@@ -180,7 +180,7 @@ public class DiscretizeDataByNumStates extends ADataDiscretizer implements IData
             if (inputData == null || inputData.isEmpty())
                 return -1;
 
-            if (numStates.getValue() <= 1)
+            if (numStates.getValue() < 1)
                 return -1;
 
             if (inputData.size() < numStates.getValue()) {
@@ -210,7 +210,7 @@ public class DiscretizeDataByNumStates extends ADataDiscretizer implements IData
             if (filter.processCost() > 0)
                 filteredData = filter.processData();
             else
-                return -1;
+                filteredData = result;
 
             if (filteredData == null)
                 return -1;

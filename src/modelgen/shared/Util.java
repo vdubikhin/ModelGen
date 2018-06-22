@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +15,18 @@ import modelgen.data.state.IState;
 public final class Util {
 
     private Util() {};
+
+    static public Integer base10Power(Double value) {
+        final String ERROR_PREFIX = "Base 10 power error.";
+        try {
+            if (value != 0.0)
+                return (int) Math.floor(Math.log10(Math.abs(value)));
+            return 0;
+        } catch (NullPointerException e) {
+            Logger.errorLoggerTrace(ERROR_PREFIX + " Null pointer exception.", e);
+        }
+        return null;
+    }
 
     static public RawDataChunk generateSignalFromStates(RawDataChunk originalSignal, List<IState> states) {
         final String ERROR_PREFIX = "Wave generator error.";
@@ -77,6 +88,7 @@ public final class Util {
                     difference += Math.abs(curDifference/originalWaveForm.get(i).getValue());
             }
 
+            difference = difference/originalWaveForm.size();
             return difference;
         } catch (ArrayIndexOutOfBoundsException e) {
             Logger.errorLoggerTrace(ERROR_PREFIX + " Array out of bounds exception.", e);
@@ -102,7 +114,7 @@ public final class Util {
             br = new BufferedReader(new FileReader(fileName));
             Map<String, RawDataChunk> csvData = new HashMap<>();
             while ((line = br.readLine()) != null) {
-                line = line.trim();
+                line = line.replaceAll(" ","");
                 if (line.isEmpty())
                     continue;
                 
@@ -190,6 +202,10 @@ public final class Util {
                 // Middle points
                 Double derivPointValue = (inputData.get(i+1).getValue() - inputData.get(i-1).getValue())/
                                          (inputData.get(i+1).getTime() - inputData.get(i-1).getTime());
+                
+                if (derivPointValue == Double.POSITIVE_INFINITY || derivPointValue == -Double.POSITIVE_INFINITY)
+                    System.out.println("DEBUG ERROR");
+                
                 outputData.add(new RawDataPoint(derivPointValue, inputData.get(i).getTime()));
             }
 

@@ -149,9 +149,7 @@ public class ModelFSM {
         
         return false;
     }
-    
-    
-    
+
     public Map<String, RawDataChunk> generateWaveform(Map<String, RawDataChunk> originalData, Map<String,
             List<IState>> discreteStates) {
         Map<String, RawDataChunk> result = new HashMap<String, RawDataChunk>();

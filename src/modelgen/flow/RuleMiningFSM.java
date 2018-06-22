@@ -79,7 +79,9 @@ public class RuleMiningFSM {
                 //Collect all rules for the same output signal
                 for (RuleComparable<PatternVector, RuleFSMVector> entry: dataRules.getStageRules()) {
                     if (entry.getOutputState().getSignalName().equals(signalName)) {
-                        entry.minimizeRules();
+//                        entry.print();
+//                        System.out.println("--Minimization--");
+//                        entry.minimizeRules();
                         rules.add(entry);
                         //TODO: debug print
                         entry.print();

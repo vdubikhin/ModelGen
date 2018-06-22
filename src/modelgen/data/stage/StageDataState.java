@@ -6,7 +6,7 @@ import modelgen.data.ControlType;
 import modelgen.data.raw.RawDataChunkGrouped;
 import modelgen.data.state.IState;
 
-public class StageDataState {
+public class StageDataState implements IStageData {
     private RawDataChunkGrouped data;
     private ControlType dataType;
     private String name;

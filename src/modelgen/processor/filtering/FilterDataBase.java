@@ -17,15 +17,15 @@ import modelgen.shared.Util;
 
 abstract class FilterDataBase extends DataProcessor<StageDataState> implements IDataProcessor<StageDataState> {
 
-    protected List<IState> correctStates(List<IState> originalStates, List<IState> filteredStates) 
+    protected List<IState> correctStates(List<IState> originalStates, List<IState> filteredStates)
             throws NullPointerException, ArrayIndexOutOfBoundsException {
         List<IState> correctedStates = new ArrayList<>(filteredStates.size());
 
-        int indexOriginal = 0, indexFiltered = 0;
+        int indexOriginal = 0, indexFiltered = filteredStates.size() - 1;
         IState curCorrectedState = filteredStates.get(indexFiltered).makeCopy();
         List<IState> curNoiseStates = new ArrayList<>();
 
-        for (indexOriginal = 0; indexOriginal < originalStates.size(); indexOriginal++ ) {
+        for (indexOriginal = originalStates.size() - 1; indexOriginal >= 0; indexOriginal-- ) {
             IState curOriginalState = originalStates.get(indexOriginal);
             IState curFilteredState = filteredStates.get(indexFiltered);
 
@@ -36,18 +36,27 @@ abstract class FilterDataBase extends DataProcessor<StageDataState> implements I
                 }
 
                 curNoiseStates.clear();
-                correctedStates.add(curCorrectedState);
+                correctedStates.add(0, curCorrectedState);
 
-                if (indexFiltered + 1 < filteredStates.size())
-                    curCorrectedState = filteredStates.get(++indexFiltered).makeCopy();
+                if (indexFiltered > 0)
+                    curCorrectedState = filteredStates.get(--indexFiltered).makeCopy();
                 else
-                    break;
+                    curCorrectedState = filteredStates.get(indexFiltered).makeCopy();
 
             } else {
                 curNoiseStates.add(curOriginalState);
             }
         }
-        
+
+        if (!curNoiseStates.isEmpty()) {
+            if (!curCorrectedState.increaseDuration(curNoiseStates)) {
+                Logger.errorLogger(ERROR_PREFIX + " Failed to merge noise states.");
+                return null;
+            }
+
+            correctedStates.add(0, curCorrectedState);
+        }
+
         return correctedStates;
     }
 
@@ -86,7 +95,9 @@ abstract class FilterDataBase extends DataProcessor<StageDataState> implements I
             RawDataChunk generatedData = Util.generateSignalFromStates(originalPoints, filteredStates);
 
             Double difference = Util.compareWaveForms(originalData, generatedData);
-            
+            if (difference < 0)
+                return -1;
+
             return difference/(inputStates.size() - filteredStates.size());
         }
         return -1;

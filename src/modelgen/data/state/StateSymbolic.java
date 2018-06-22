@@ -2,6 +2,8 @@ package modelgen.data.state;
 
 import modelgen.data.DataType;
 import modelgen.data.raw.RawDataChunk;
+import modelgen.data.raw.RawDataPoint;
+import modelgen.shared.Util;
 
 public class StateSymbolic extends State implements IState {
     static final String POSTFIX = "_STATE";
@@ -70,13 +72,25 @@ public class StateSymbolic extends State implements IState {
 
     @Override
     public RawDataChunk generateSignal(RawDataChunk baseSignal) {
-        // TODO Auto-generated method stub
-        return null;
+        RawDataChunk outputData = new RawDataChunk();
+
+        for (RawDataPoint curPoint: baseSignal) {
+            if (start <= curPoint.getTime() && curPoint.getTime() <= end) {
+                RawDataPoint newPoint = new RawDataPoint(new Double(stateId), curPoint.getTime());
+                outputData.add(newPoint);
+            }
+        }
+        return outputData;
     }
 
     @Override
     public String convertToInitialCondition() {
         String output = signalName + POSTFIX + "=" + stateId;
         return output;
+    }
+
+    @Override
+    public Integer getScalePower() {
+        return  Util.base10Power(new Double(getId()));
     }
 }

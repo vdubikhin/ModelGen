@@ -22,7 +22,7 @@ import modelgen.shared.Logger;
 
 public class ResolveByAnalog extends DataProcessor<RuleComparable<PatternVector, RuleFSMVector>>
                       implements IDataProcessor<RuleComparable<PatternVector, RuleFSMVector>> {
-    final private Integer RESOLVE_COST = 7;
+    final private Integer RESOLVE_COST = 1;
 
     private ConflictComparable<PatternVector, RuleFSMVector> conflictToResolve;
 
@@ -53,22 +53,24 @@ public class ResolveByAnalog extends DataProcessor<RuleComparable<PatternVector,
             int vectorId = conflictToResolve.getId();
             RuleFSMVector ruleToFix = conflictToResolve.getRuleToFix();
             PatternVector vectorToFix = ruleToFix.getRuleVectorById(vectorId);
+            PatternVector vectorToFull = ruleToFix.getFullRuleVectorById(vectorId);
             HashMap<String, RawDataChunk> rawData = ruleToFix.getAnalogDataById(vectorId);
 
             if (rawData == null || rawData.isEmpty())
                 return -1;
 
-            if (vectorToFix.isEmpty())
-                return valueBaseCost.getValue();
-
-            StateVector stateVector = vectorToFix.values().iterator().next();
-
-            //Check if raw data has been all added
-            if (stateVector.keySet().containsAll(rawData.keySet()))
+            if (vectorToFull.isEmpty())
                 return -1;
 
-            //TODO: add additional check if analog data can be discretized
+            //Check if raw data has been all added
+            StateVector stateVectorFull = vectorToFull.values().iterator().next();
+            if (stateVectorFull.keySet().containsAll(rawData.keySet()))
+                return -1;
+
+            if (vectorToFix.isEmpty())
+                return valueBaseCost.getValue();
             
+            //TODO: add additional check if analog data can be discretized
             return valueBaseCost.getValue();
         } catch (ArrayIndexOutOfBoundsException e) {
             Logger.errorLoggerTrace(ERROR_PREFIX + " Array out of bounds exception.", e);

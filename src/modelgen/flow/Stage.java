@@ -6,11 +6,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import modelgen.data.property.*;
+import modelgen.data.stage.IStageData;
 import modelgen.manager.IDataManager;
 import modelgen.processor.IDataProcessorFactory;
 import modelgen.shared.Logger;
 
-abstract class Stage<I, O> implements IStage<I, O> {
+abstract class Stage<I extends IStageData, O extends IStageData> implements IStage<I, O> {
     protected String ERROR_PREFIX = "Stage: abstract error.";
     protected String DEBUG_PREFIX = "Stage: abstract debug.";
 

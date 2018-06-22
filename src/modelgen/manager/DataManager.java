@@ -15,11 +15,13 @@ import modelgen.data.property.PropertyHashSet;
 import modelgen.data.property.PropertyInteger;
 import modelgen.data.property.PropertyManager;
 import modelgen.data.property.PropertySettable;
+import modelgen.data.stage.IStageData;
 import modelgen.processor.IDataProcessor;
 import modelgen.processor.IDataProcessorFactory;
 import modelgen.shared.Logger;
 
-abstract class DataManager<T, S> implements IDataManager<T, S>, PropertySettable {
+abstract class DataManager<T extends IStageData, S extends IStageData> implements IDataManager<T, S>,
+    PropertySettable {
     protected String ERROR_PREFIX = "DataManager: Abstract error.";
     protected String DEBUG_PREFIX = "DataManager: Abstract debug.";
 
@@ -98,6 +100,11 @@ abstract class DataManager<T, S> implements IDataManager<T, S>, PropertySettable
             List<IDataProcessor<S>> sortedProcessors = new ArrayList<>(dataProcessors.values());
             sortDataProcessors(sortedProcessors);
 
+            for (IDataProcessor<S> processor: sortedProcessors) {
+                Logger.debugPrintln(DEBUG_PREFIX + " Using processor: " + processor.getName() + " Name: "
+                        + inputData.getName() + " Cost: " + processor.processCost(), debugPrint.getValue());
+            }
+            
             //Use sorted processors list to process data
             for (IDataProcessor<S> processor: sortedProcessors) {
                 Double cost = processor.processCost();
@@ -105,8 +112,6 @@ abstract class DataManager<T, S> implements IDataManager<T, S>, PropertySettable
                 if (cost > 0) {
                     S output = processor.processData();
                     if (output != null) {
-                        Logger.debugPrintln(DEBUG_PREFIX + " Using processor: " + processor.getName() + " Cost: "
-                                            + cost, debugPrint.getValue());
                         return new AbstractMap.SimpleEntry<S, Double>(output, cost);
                     }
                 }

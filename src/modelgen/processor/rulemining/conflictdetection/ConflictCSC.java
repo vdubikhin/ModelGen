@@ -72,4 +72,9 @@ public class ConflictCSC implements ConflictComparable<PatternVector, RuleFSMVec
     public Integer getOffendingVectorId() {
         return vectorB;
     }
+
+    @Override
+    public String getName() {
+        return toString();
+    }
 }

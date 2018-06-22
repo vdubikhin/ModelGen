@@ -38,11 +38,11 @@ public class DiscretizeDataByStabilityCluster extends DataProcessor<StageDataSta
     final private static String PD_MIN_STABLE_DURATION = PD_PREFIX + "MIN_STABLE_DURATION";
     final private static String PD_DISTRIBUTION_PEAK = PD_PREFIX + "DISTRIBUTION_PEAK";
 
-    final private double VAR_COEFF = 0.25;
+    final private double VAR_COEFF = 0.5;
     final private double MIN_STABLE_DURATION = 0.8;
     final private Integer VALUE_BASE_COST = 3;
-    final private Integer MAX_UNIQUE_STATES = 15;
-    final private Double DISTRIBUTION_PEAK = 0.65;
+    final private Integer MAX_UNIQUE_STATES = 50;
+    final private Double DISTRIBUTION_PEAK = 0.55;
 
     PropertyDouble varCoefficient;
     PropertyDouble minStableDuration;
@@ -183,7 +183,7 @@ public class DiscretizeDataByStabilityCluster extends DataProcessor<StageDataSta
         if (filter.processCost() > 0)
             filteredData = filter.processData();
         else
-            return null;
+            filteredData = data;
 
         if (filteredData == null)
             return null;

@@ -4,27 +4,28 @@ import java.text.DecimalFormat;
 
 import modelgen.data.DataType;
 import modelgen.data.raw.RawDataChunk;
+import modelgen.data.raw.RawDataPoint;
 import modelgen.data.raw.RawDataThreshold;
 import modelgen.shared.Logger;
+import modelgen.shared.Util;
 
 public class StateThresholds extends State implements IState {
     RawDataThreshold thresholds;
 
     public StateThresholds(String name, Double start, Double end, Double lowBound, Double upperBound) {
-        super(name, Double.hashCode(lowBound + upperBound), start, end);
+        super(name, generateStateId(lowBound + upperBound), start, end);
         thresholds = new RawDataThreshold(lowBound, upperBound);
     }
 
     public StateThresholds(StateThresholds toCopy) {
         this(toCopy.signalName, toCopy.start, toCopy.end, toCopy.thresholds.getLowBound(),
                 toCopy.thresholds.getUpperBound());
+        stateId = toCopy.stateId;
     }
 
     @Override
     public String convertToString() {
-        DecimalFormat df = new DecimalFormat();
-        df.setMaximumFractionDigits(2);
-        return "[" + df.format(thresholds.getLowBound()) + ", " + df.format(thresholds.getUpperBound()) + "]";
+        return "[" + convertToInt(thresholds.getLowBound()) + ", " + convertToInt(thresholds.getUpperBound()) + "]";
     }
 
     @Override
@@ -39,8 +40,15 @@ public class StateThresholds extends State implements IState {
 
     @Override
     public RawDataChunk generateSignal(RawDataChunk baseSignal) {
-        // TODO Auto-generated method stub
-        return null;
+        RawDataChunk outputData = new RawDataChunk();
+
+        for (RawDataPoint curPoint: baseSignal) {
+            if (start <= curPoint.getTime() && curPoint.getTime() <= end) {
+                RawDataPoint newPoint = new RawDataPoint(thresholds.getCenter(), curPoint.getTime());
+                outputData.add(newPoint);
+            }
+        }
+        return outputData;
     }
 
     @Override
@@ -107,5 +115,13 @@ public class StateThresholds extends State implements IState {
         String output = signalName + "=uniform(" + convertToInt(thresholds.getUpperBound()) + ","
                 + convertToInt(thresholds.getLowBound()) + ")";
         return output;
+    }
+
+    @Override
+    public Integer getScalePower() {
+        Integer lBase = Util.base10Power(thresholds.getLowBound());
+        Integer uBase = Util.base10Power(thresholds.getUpperBound());
+
+        return Math.min(lBase, uBase);
     }
 }

@@ -11,7 +11,7 @@ public class FilterDataDummy extends DataProcessor<StageDataState> implements ID
     final private static String PD_MAX_PRECISION_LOSS = PD_PREFIX + "MAX_PRECISION_LOSS";
 
 
-    final private Double MAX_PRECISION_LOSS = 10.0;
+    final private Double MAX_PRECISION_LOSS =2125.0;
     PropertyDouble maxPrecisionLoss;
 
     StageDataState data;

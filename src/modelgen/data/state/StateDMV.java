@@ -6,30 +6,33 @@ import modelgen.data.DataType;
 import modelgen.data.raw.RawDataChunk;
 import modelgen.data.raw.RawDataPoint;
 import modelgen.data.raw.RawDataThreshold;
+import modelgen.shared.Util;
 
 public class StateDMV extends State implements IState {
     RawDataThreshold thresholds;
 
     public StateDMV (String name, Double start, Double end, Double lb, Double ub) {
-        super(name, Double.hashCode(lb + ub), start, end);
+        super(name, generateStateId(lb, ub), start, end);
         thresholds = new RawDataThreshold(lb, ub);
     }
 
     public StateDMV (String name, Double start, Double end, Double value) {
-        super(name, Double.hashCode(value), start, end);
+        super(name, generateStateId(value), start, end);
         thresholds = new RawDataThreshold(value, value);
     }
 
     public StateDMV (StateDMV toCopy) {
         this(toCopy.signalName, toCopy.start, toCopy.end, toCopy.thresholds.getLowBound(),
                 toCopy.thresholds.getUpperBound());
+        stateId = toCopy.stateId;
     }
     
     @Override
     public String convertToString() {
-        DecimalFormat df = new DecimalFormat();
-        df.setMaximumFractionDigits(2);
-        return "[" + df.format(thresholds.getLowBound()) + ", " + df.format(thresholds.getUpperBound()) + "]";
+        if (thresholds.getUpperBound().equals(thresholds.getLowBound()))
+            return "[" + convertToInt(thresholds.getCenter()) + "]";
+        else
+            return "[" + convertToInt(thresholds.getLowBound()) + ", " + convertToInt(thresholds.getUpperBound()) + "]";
     }
 
     @Override
@@ -78,4 +81,11 @@ public class StateDMV extends State implements IState {
         return output;
     }
 
+    @Override
+    public Integer getScalePower() {
+        Integer lBase = Util.base10Power(thresholds.getLowBound());
+        Integer uBase = Util.base10Power(thresholds.getUpperBound());
+
+        return Math.min(lBase, uBase);
+    }
 }

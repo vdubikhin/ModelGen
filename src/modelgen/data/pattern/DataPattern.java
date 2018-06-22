@@ -24,9 +24,14 @@ public class DataPattern implements Mergeable<DataPattern>{
     }
 
     public DataPattern(DataPattern copy) {
+        copyInit(copy);
+    }
+
+    protected void copyInit(DataPattern copy) {
         setRuleVector(new PatternVector(copy.getRuleVector()));
         setFullRuleVector(new PatternVector(copy.getFullRuleVector()));
         setInputRawData(copy.getInputRawData());
+        outputState = copy.outputState;
     }
 
     public PatternVector getRuleVector() {
@@ -105,7 +110,8 @@ public class DataPattern implements Mergeable<DataPattern>{
 
     @Override
     public boolean canMergeWith(DataPattern itemToMerge) {
-        if (this.ruleVector.compareTo(itemToMerge.ruleVector) != DataEquality.EQUAL)
+        DataEquality cmpResult = this.ruleVector.compareTo(itemToMerge.ruleVector);
+        if (cmpResult == DataEquality.UNIQUE)
             return false;
 
         //TODO: think on how to merge rules with non-empty preset/postsets
@@ -130,6 +136,10 @@ public class DataPattern implements Mergeable<DataPattern>{
 
         if (patternDelay == null || itemToMergeDelayLow == null || itemToMergeDelayHigh == null)
             return false;
+
+        //Copy fields of the superset DataPattern
+        if (this.ruleVector.compareTo(itemToMerge.ruleVector) == DataEquality.SUBSET)
+            copyInit(itemToMerge);
 
         mergeDelayLow = Math.min(itemToMergeDelayLow, patternDelay);
         mergeDelayHigh = Math.max(itemToMergeDelayHigh, patternDelay);

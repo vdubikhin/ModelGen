@@ -26,7 +26,7 @@ import modelgen.processor.rulemining.conflictdetection.RuleComparable;
 import modelgen.processor.rulemining.conflictdetection.RuleFSMVector;
 import modelgen.shared.Logger;
 
-public class LPNConstructor {    
+public class LPNConstructor {
     protected String ERROR_PREFIX = "LPNConstructor error.";
     protected String DEBUG_PREFIX = "LPNConstructor debug.";
     protected int DEBUG_LEVEL = 1; //TODO: change to property class
@@ -34,6 +34,9 @@ public class LPNConstructor {
     protected String RESET_PREFIX      = "R";
     protected String PLACE_PREFIX      = "P_";
     protected String TRANSITION_PREFIX = "T_";
+
+    private Double targetScale = 1.0;
+    private Boolean useDelays = false;
 
     int transitionNumber;
     int placeNumber;
@@ -56,12 +59,28 @@ public class LPNConstructor {
             if (signalRules == null) 
                 return null;
 
-            String signalName = signalRules.getSignalName();
+            String signalName = signalRules.getName();
 
             LPNModel model = new LPNModel();
 
             Map<PatternVector, List<LPNTransition>> modelTransitions = new HashMap<>();
             Map<PatternVector, List<LPNPlace>> modelPlaces = new HashMap<>();
+
+            //Set scale for rules
+            Integer minScaleFactor = Integer.MAX_VALUE;
+            for (RuleComparable<PatternVector, RuleFSMVector> signalRule: signalRules.getSignalRules())
+                minScaleFactor = Math.min(signalRule.getScaleFactor(), minScaleFactor);
+
+            //minScaleFactor = targetScale - minScaleFactor;
+           // if (minScaleFactor > 0) {
+                minScaleFactor = (int) Math.pow(10, minScaleFactor);
+                System.out.println("Scale factor: " + minScaleFactor);
+                for (RuleComparable<PatternVector, RuleFSMVector> signalRule: signalRules.getSignalRules()) {
+                    signalRule.setScaleFactor(targetScale);
+                }
+                
+                signalRules.getInitialState().setScale(targetScale);
+          //  }
 
             model.addInitialCondition(signalRules.getInitialState());
             model.addInitialCondition( convetToSymbolicState(signalRules.getInitialState()) );
@@ -343,9 +362,11 @@ public class LPNConstructor {
             //Add assignment condition for the last transition
             if (key.equals(sortedPatternVector.lastKey())) {
                 addAssignmentConditions(signalRule.getOutputState(), transition);
-                Map.Entry<Double, Double> delays = signalRule.getDelayById(patternVector.getId());
-                transition.setDelayLow(delays.getKey());
-                transition.setDelayHigh(delays.getValue());
+                if (useDelays) {
+                    Map.Entry<Integer, Integer> delays = signalRule.getDelayById(patternVector.getId());
+                    transition.setDelayLow(delays.getKey());
+                    transition.setDelayHigh(delays.getValue());
+                }
             }
 
             //Add reset links to all intermediate places

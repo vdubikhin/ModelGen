@@ -16,8 +16,10 @@ import modelgen.data.pattern.DataPatterns;
 import modelgen.data.pattern.PatternVector;
 import modelgen.data.pattern.StateVector;
 import modelgen.data.raw.RawDataChunk;
+import modelgen.data.state.IState;
 import modelgen.data.state.IStateTimeless;
 import modelgen.shared.Logger;
+import modelgen.shared.Util;
 
 public class RuleFSMVector implements RuleComparable<PatternVector, RuleFSMVector> {
     protected String ERROR_PREFIX = "StatesToPatternConvertert error.";
@@ -26,10 +28,13 @@ public class RuleFSMVector implements RuleComparable<PatternVector, RuleFSMVecto
 
     IStateTimeless outputState;
     Map<Integer, DataPattern> outputPatterns;
-    
+
+    Double scaleCoeff;
+
     public RuleFSMVector(IStateTimeless state, DataPatterns patterns) {
         outputState = state;
         outputPatterns = new HashMap<>();
+        scaleCoeff = 1.0;
         for (DataPattern curPattern: patterns) {
             outputPatterns.put(curPattern.getFullRuleVector().getId(), curPattern);
         }
@@ -45,8 +50,8 @@ public class RuleFSMVector implements RuleComparable<PatternVector, RuleFSMVecto
                     pattern = curPattern.getFullRuleVector();
 
                 Logger.debugPrintln(outputState.getSignalName() + "<" + curPattern.getOutputState().getId()  + ">" +
-                        "-(" + curPattern.getOutputState().getTimeStamp().getKey() + ")- [" +
-                        curPattern.getDelayLow() + ", " + curPattern.getDelayHigh() + "]",
+                        "-(" + curPattern.getOutputState().getTimeStamp().getKey() + ")- "
+                        + outputState.convertToString(),
                         DEBUG_LEVEL);
                 // Get set of printable names first
                 HashSet<String> stateNames = new HashSet<String>();
@@ -108,15 +113,15 @@ public class RuleFSMVector implements RuleComparable<PatternVector, RuleFSMVecto
             Logger.errorLoggerTrace(ERROR_PREFIX + " Array out of bounds exception.", e);
         }
     }
-    
+
     public void printFullVectors() {
         printVectors(outputPatterns.values(), false);
     }
-    
+
     public void printRuleVectors() {
         printVectors(outputPatterns.values(), true);
     }
-    
+
     @Override
     public void print() {
         Logger.debugPrintln("\nPrinting rule vectors", DEBUG_LEVEL);
@@ -124,7 +129,7 @@ public class RuleFSMVector implements RuleComparable<PatternVector, RuleFSMVecto
         Logger.debugPrintln("\nPrinting full rule vectors", DEBUG_LEVEL);
         printFullVectors();
     }
-    
+
     @Override
     public IStateTimeless getOutputState() {
         return outputState;
@@ -228,17 +233,62 @@ public class RuleFSMVector implements RuleComparable<PatternVector, RuleFSMVecto
             Logger.errorLoggerTrace(ERROR_PREFIX + " Array out of bounds exception.", e);
         }
     }
+
+    @Override
+    public void setScaleFactor(Double scale) {
+        if (scale != 0) {
+            for (DataPattern curPattern: outputPatterns.values()) {
+                for (StateVector curVector: curPattern.getRuleVector().values()) {
+                    for (IState curState: curVector.values()) {
+                        curState.setScale(scale);
+                    }
+                }
+            }
+            outputState.setScale(scale);
+            scaleCoeff = scale;
+        }
+    }
     
     @Override
-    public Map.Entry<Double, Double> getDelayById(Integer id) {
+    public Integer getScaleFactor() {
         try {
-            Double delayLow =  outputPatterns.get(id).getDelayLow();
-            Double delayHigh=  outputPatterns.get(id).getDelayHigh();
-            
+            Integer scaleFactor = 0;
+            for (DataPattern curPattern: outputPatterns.values()) {
+                for (StateVector curVector: curPattern.getRuleVector().values()) {
+                    for (IState curState: curVector.values()) {
+                        scaleFactor = Math.min(curState.getScalePower(), scaleFactor);
+                    }
+                }
+
+                Double delayLow = curPattern.getDelayLow();
+                Double delayHigh= curPattern.getDelayHigh();
+
+                scaleFactor = Math.min(Util.base10Power(delayLow), scaleFactor);
+                scaleFactor = Math.min(Util.base10Power(delayHigh), scaleFactor);
+            }
+
+            return scaleFactor;
+        } catch (NullPointerException e) {
+            Logger.errorLoggerTrace(ERROR_PREFIX + " Null pointer exception.", e);
+        } catch (ArrayIndexOutOfBoundsException e) {
+            Logger.errorLoggerTrace(ERROR_PREFIX + " Array out of bounds exception.", e);
+        }
+        return null;
+    }
+
+    @Override
+    public Map.Entry<Integer, Integer> getDelayById(Integer id) {
+        try {
+//            Integer delayLow = (int) (outputPatterns.get(id).getDelayLow() * scaleCoeff);
+//            Integer delayHigh = (int) (outputPatterns.get(id).getDelayHigh() * scaleCoeff);
+
+            Integer delayLow = outputPatterns.get(id).getDelayLow().intValue();
+            Integer delayHigh =outputPatterns.get(id).getDelayHigh().intValue();
+
             if (delayLow == null || delayHigh == null)
                 return null;
-            
-            Map.Entry<Double, Double> output = new AbstractMap.SimpleEntry<Double, Double>(delayLow, delayHigh);
+
+            Map.Entry<Integer, Integer> output = new AbstractMap.SimpleEntry<Integer, Integer>(delayLow, delayHigh);
             return output;
         } catch (NullPointerException e) {
             Logger.errorLoggerTrace(ERROR_PREFIX + " Null pointer exception.", e);
@@ -246,5 +296,10 @@ public class RuleFSMVector implements RuleComparable<PatternVector, RuleFSMVecto
             Logger.errorLoggerTrace(ERROR_PREFIX + " Array out of bounds exception.", e);
         }
         return null;
+    }
+
+    @Override
+    public String getName() {
+        return getOutputState().getSignalName();
     }
 }

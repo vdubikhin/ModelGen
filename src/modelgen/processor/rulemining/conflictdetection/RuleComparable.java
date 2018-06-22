@@ -6,10 +6,11 @@ import java.util.Map.Entry;
 
 import modelgen.data.complex.ComplexComparable;
 import modelgen.data.raw.RawDataChunk;
+import modelgen.data.stage.IStageData;
 import modelgen.data.state.IStateTimeless;
 
 public interface RuleComparable< T extends ComplexComparable<T>, V extends RuleComparable<T, V> >
-    extends ERuleComparable {
+    extends ERuleComparable, IStageData{
 
     void print();
 
@@ -33,5 +34,9 @@ public interface RuleComparable< T extends ComplexComparable<T>, V extends RuleC
 
     void minimizeRules();
 
-    Entry<Double, Double> getDelayById(Integer id);
+    Entry<Integer, Integer> getDelayById(Integer id);
+
+    Integer getScaleFactor();
+
+    void setScaleFactor(Double scale);
 }

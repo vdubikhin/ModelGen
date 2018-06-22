@@ -13,7 +13,7 @@ public class DiscretizerFactory extends DataProcessorFactory<StageDataRaw, Stage
         try {
             processorClasses.put(DiscretizeDataByValues.class.newInstance().getName(), DiscretizeDataByValues.class);
             processorClasses.put(DiscretizeDataByDerivativeCluster.class.newInstance().getName(), DiscretizeDataByDerivativeCluster.class);
-            processorClasses.put(DiscretizeDataByStabilityCluster.class.newInstance().getName(), DiscretizeDataByStabilityCluster.class);
+//            processorClasses.put(DiscretizeDataByStabilityCluster.class.newInstance().getName(), DiscretizeDataByStabilityCluster.class);
             processorClasses.put(DiscretizeDataDummy.class.newInstance().getName(), DiscretizeDataDummy.class);
             inputDataClass = StageDataRaw.class;
         } catch (InstantiationException | IllegalAccessException e) {

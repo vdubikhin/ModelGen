@@ -10,6 +10,7 @@ import modelgen.data.DataType;
 import modelgen.data.raw.RawDataChunk;
 import modelgen.data.raw.RawDataPoint;
 import modelgen.shared.Logger;
+import modelgen.shared.Util;
 
 public class StateContinousRange extends State implements IState {
     private Double lowerBound, upperBound;
@@ -17,7 +18,7 @@ public class StateContinousRange extends State implements IState {
     
     public StateContinousRange(String name, Double start, Double end, Double lowBound, Double upperBound,
             Double initialValue) {
-        super(name, Double.hashCode(lowBound + upperBound), start, end);
+        super(name, generateStateId(lowBound + upperBound), start, end);
         this.lowerBound = lowBound;
         this.upperBound = upperBound;
         this.initialValue = initialValue;
@@ -26,13 +27,12 @@ public class StateContinousRange extends State implements IState {
     public StateContinousRange(StateContinousRange toCopy) {
         this(toCopy.signalName, toCopy.start, toCopy.end, toCopy.lowerBound, toCopy.upperBound,
                 toCopy.initialValue);
+        stateId = toCopy.stateId;
     }
 
     @Override
     public String convertToString() {
-        DecimalFormat df = new DecimalFormat();
-        df.setMaximumFractionDigits(2);
-        return "[" + df.format(lowerBound) + ", " + df.format(upperBound) + "]";
+        return "[" + convertToInt(lowerBound) + ", " + convertToInt(upperBound) + "]";
     }
 
     @Override
@@ -85,16 +85,12 @@ public class StateContinousRange extends State implements IState {
 
     @Override
     public String convertToInitialCondition() {
-        DecimalFormat df = new DecimalFormat();
-        df.setMaximumFractionDigits(2);
         String output = signalName + "=" + convertToInt(initialValue);
         return output;
     }
 
     @Override
     public String convertToInitialRateCondition() {
-        DecimalFormat df = new DecimalFormat();
-        df.setMaximumFractionDigits(2);
         String output = signalName + "=[" + convertToInt(lowerBound) + "," + convertToInt(upperBound) + "]";
         return output;
     }
@@ -121,5 +117,14 @@ public class StateContinousRange extends State implements IState {
             Logger.errorLoggerTrace(ERROR_PREFIX + " Can not merge states of different type.", e);
         }
         return false;
+    }
+
+    @Override
+    public Integer getScalePower() {
+        Integer lBase = Util.base10Power(lowerBound);
+        Integer uBase = Util.base10Power(upperBound);
+        Integer iBase = Util.base10Power(initialValue);
+
+        return Math.min(Math.min(lBase, uBase), iBase);
     }
 }

@@ -7,7 +7,7 @@ import modelgen.data.state.IState;
 import modelgen.processor.rulemining.conflictdetection.RuleComparable;
 import modelgen.processor.rulemining.conflictdetection.RuleFSMVector;
 
-public class StageDataRule {
+public class StageDataRule implements IStageData {
     List<? extends RuleComparable<PatternVector, RuleFSMVector>> signalRules;
     IState initialState;
 
@@ -25,7 +25,7 @@ public class StageDataRule {
         return signalRules;
     }
 
-    public String getSignalName() {
+    public String getName() {
         return initialState.getSignalName();
     }
 }
