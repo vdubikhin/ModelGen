@@ -65,7 +65,10 @@ public abstract class ClusterPoint<T extends ClusterPoint<T>> implements Cloneab
 
     @Override
     public double measureDistanceTo(T objectToMeasure) {
-        return Math.abs(center - objectToMeasure.center);
+        if (Math.signum(center) == Math.signum(objectToMeasure.center))
+            return Math.abs(center - objectToMeasure.center);
+        else
+            return Double.MAX_VALUE;
     }
 
     @Override

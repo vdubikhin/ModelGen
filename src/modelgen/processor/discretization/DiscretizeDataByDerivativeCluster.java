@@ -1,6 +1,7 @@
 package modelgen.processor.discretization;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import modelgen.data.ControlType;
 import modelgen.data.complex.ClusterPointValue;
@@ -9,6 +10,7 @@ import modelgen.data.property.PropertyDouble;
 import modelgen.data.property.PropertyManager;
 import modelgen.data.raw.RawDataChunk;
 import modelgen.data.raw.RawDataChunkGrouped;
+import modelgen.data.raw.RawDataPoint;
 import modelgen.data.raw.RawDataPointGrouped;
 import modelgen.data.stage.StageDataRaw;
 import modelgen.data.stage.StageDataState;
@@ -19,8 +21,8 @@ import modelgen.shared.Util;
 
 public class DiscretizeDataByDerivativeCluster extends DiscretizeDataByStabilityCluster {
     final private Integer VALUE_BASE_COST = 3;
-    final private Integer MAX_UNIQUE_STATES = 50;
-    final private double VAR_COEFF = 0.9;
+    final private Integer MAX_UNIQUE_STATES = 100;
+    final private double VAR_COEFF = 0.0001;
 
     private RawDataChunk derivData;
 
@@ -138,5 +140,24 @@ public class DiscretizeDataByDerivativeCluster extends DiscretizeDataByStability
             Logger.errorLoggerTrace(ERROR_PREFIX + " Null pointer exception.", e);
         }
         return -1;
+    }
+   
+    protected ClusterPointValue getClosestCluster(RawDataPoint point, List<ClusterPointValue> stabilityData)
+            throws NullPointerException, ArrayIndexOutOfBoundsException {
+        double minDistance = Double.POSITIVE_INFINITY;
+        ClusterPointValue bestCluster = null;
+        for (ClusterPointValue cluster: stabilityData) {
+            double distance;
+            if (Math.signum(cluster.getClusterCenter() ) == Math.signum(point.getValue()))
+                distance = Math.abs(cluster.getClusterCenter() - point.getValue());
+            else
+                distance = Double.MAX_VALUE;
+
+            if (distance < minDistance) {
+                minDistance = distance;
+                bestCluster = cluster;
+            }
+        }
+        return bestCluster;
     }
 }
