@@ -115,10 +115,15 @@ public class DataPattern implements Mergeable<DataPattern>{
             return false;
 
         //TODO: think on how to merge rules with non-empty preset/postsets
-        if (!this.ruleVector.getPostSet().isEmpty() || !this.ruleVector.getPreSet().isEmpty())
-            return false;
+//        if (!this.ruleVector.getPostSet().isEmpty() || !this.ruleVector.getPreSet().isEmpty())
+//            return false;
+//
+//        if (!itemToMerge.ruleVector.getPostSet().isEmpty() || !itemToMerge.ruleVector.getPreSet().isEmpty())
+//            return false;
 
-        if (!itemToMerge.ruleVector.getPostSet().isEmpty() || !itemToMerge.ruleVector.getPreSet().isEmpty())
+        //Simple merge for elements with equals post and pre sets
+        if (!this.ruleVector.getPostSet().equals( itemToMerge.ruleVector.getPostSet() ) || 
+                !this.ruleVector.getPreSet().equals( itemToMerge.ruleVector.getPreSet()) )
             return false;
 
         return true;

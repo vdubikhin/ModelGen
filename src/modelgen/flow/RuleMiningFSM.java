@@ -1,9 +1,11 @@
 package modelgen.flow;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import modelgen.data.pattern.PatternVector;
 import modelgen.data.stage.StageDataRule;
@@ -61,10 +63,10 @@ public class RuleMiningFSM {
                 
                 System.out.println("Iteration: " + safeLimit);
                 
-//                for (RuleComparable<PatternVector, RuleFSMVector> entry: dataRules.getStageRules()) {
-//                    //TODO: debug print
-//                    entry.print();
-//                }
+                for (RuleComparable<PatternVector, RuleFSMVector> entry: dataRules.getStageRules()) {
+                    //TODO: debug print
+                    entry.print();
+                }
             }
 
             List<RuleFSMVector> resolvedRules = dataRules.getStageRules();
@@ -75,18 +77,36 @@ public class RuleMiningFSM {
             System.out.println("--------------");
             for (String signalName: signalPatterns.getInitialStates().keySet()) {
                 List<RuleComparable<PatternVector, RuleFSMVector>> rules = new ArrayList<>();
+                Set<Integer> activeRules = new HashSet<>();
 
                 //Collect all rules for the same output signal
                 for (RuleComparable<PatternVector, RuleFSMVector> entry: dataRules.getStageRules()) {
                     if (entry.getOutputState().getSignalName().equals(signalName)) {
-//                        entry.print();
-//                        System.out.println("--Minimization--");
-//                        entry.minimizeRules();
-                        rules.add(entry);
-                        //TODO: debug print
                         entry.print();
+                        
+
+                        entry.minimizeRules();
+                        rules.add(entry);
+
+                        for (PatternVector signalRule: entry.getRulePatterns()) {
+                            activeRules.add(signalRule.getId());
+                        }
+
                     }
                 }
+
+                System.out.println("--Minimization--");
+
+                //Remove pre/postset dependencies for removed rules
+                for (RuleComparable<PatternVector, RuleFSMVector> entry: dataRules.getStageRules()) {
+                    for (PatternVector signalRule: entry.getRulePatterns()) {
+                        signalRule.getPreSet().retainAll(activeRules);
+                        signalRule.getPostSet().retainAll(activeRules);
+                    }
+                    //TODO: debug print
+                    entry.print();
+                }
+                
                 output.add(new StageDataRule(rules, signalPatterns.getInitialStates().get(signalName)));
             }
 

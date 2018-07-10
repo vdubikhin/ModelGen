@@ -18,7 +18,7 @@ import modelgen.shared.Logger;
 
 public class ResolveByVector extends DataProcessor<RuleComparable<PatternVector, RuleFSMVector>>
                                     implements IDataProcessor<RuleComparable<PatternVector, RuleFSMVector>> {
-    final private Integer RESOLVE_COST = 6;
+    final private Integer RESOLVE_COST = 11;
     
     private ConflictComparable<PatternVector, RuleFSMVector> conflictToResolve;
     
@@ -46,10 +46,20 @@ public class ResolveByVector extends DataProcessor<RuleComparable<PatternVector,
     @Override
     public double processCost() {
         try {
-            int vectorId = conflictToResolve.getId();
+            Integer vectorToFixId = conflictToResolve.getId();
+            Integer dependancyVectorId = conflictToResolve.getOffendingVectorId();
+
             RuleFSMVector ruleToFix = conflictToResolve.getRuleToFix();
-            PatternVector vectorToFix = ruleToFix.getRuleVectorById(vectorId);
-            PatternVector vectorFull = ruleToFix.getFullRuleVectorById(vectorId);
+            PatternVector vectorToFix = ruleToFix.getRuleVectorById(vectorToFixId);
+            PatternVector vectorFull = ruleToFix.getFullRuleVectorById(vectorToFixId);
+
+            RuleFSMVector ruleOffending = conflictToResolve.getOffendingRule();
+            PatternVector vectorOffending = ruleOffending.getRuleVectorById(dependancyVectorId);
+
+            //Check that vectors dont have a dependency on each other
+            if (vectorToFix.hasDependency(dependancyVectorId) && 
+                    vectorOffending.hasDependency(vectorToFixId))
+                return -1;
 
             //Not possible to expand empty vectors
             if (vectorFull.isEmpty() || vectorToFix.isEmpty())

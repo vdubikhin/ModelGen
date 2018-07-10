@@ -59,12 +59,22 @@ public class ResolveByState extends DataProcessor<RuleComparable<PatternVector, 
     @Override
     public double processCost() {
         try {
-            int vectorId = conflictToResolve.getId();
+            Integer vectorToFixId = conflictToResolve.getId();
+            Integer dependancyVectorId = conflictToResolve.getOffendingVectorId();
+
             RuleFSMVector ruleToFix = conflictToResolve.getRuleToFix();
-            PatternVector vectorToFix = ruleToFix.getRuleVectorById(vectorId);
-            PatternVector vectorFull = ruleToFix.getFullRuleVectorById(vectorId);
+            PatternVector vectorToFix = ruleToFix.getRuleVectorById(vectorToFixId);
+            PatternVector vectorFull = ruleToFix.getFullRuleVectorById(vectorToFixId);
 
             StateVector stateFull = vectorFull.values().iterator().next();
+
+            RuleFSMVector ruleOffending = conflictToResolve.getOffendingRule();
+            PatternVector vectorOffending = ruleOffending.getRuleVectorById(dependancyVectorId);
+
+            //Check that vectors dont have a dependency on each other
+            if (vectorToFix.hasDependency(dependancyVectorId) && 
+                    vectorOffending.hasDependency(vectorToFixId))
+                return -1;
 
             //Check if full state vector contains any states
             if (stateFull.isEmpty())

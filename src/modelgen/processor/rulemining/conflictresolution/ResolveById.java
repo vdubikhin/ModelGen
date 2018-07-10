@@ -13,7 +13,7 @@ import modelgen.shared.Logger;
 
 public class ResolveById extends DataProcessor<RuleComparable<PatternVector, RuleFSMVector>>
                   implements IDataProcessor<RuleComparable<PatternVector, RuleFSMVector>> {
-    final private Integer RESOLVE_COST = 20;
+    final private Integer RESOLVE_COST = 10;
 
     private ConflictComparable<PatternVector, RuleFSMVector> conflictToResolve;
 
@@ -44,11 +44,14 @@ public class ResolveById extends DataProcessor<RuleComparable<PatternVector, Rul
         Integer dependancyVectorId = conflictToResolve.getOffendingVectorId();
 
         RuleFSMVector ruleToFix = conflictToResolve.getRuleToFix();
+        RuleFSMVector ruleOffending = conflictToResolve.getOffendingRule();
 
         PatternVector vectorToFix = ruleToFix.getRuleVectorById(vectorToFixId);
+        PatternVector vectorOffending = ruleOffending.getRuleVectorById(dependancyVectorId);
 
-        if (vectorToFix.hasDependency(dependancyVectorId))
-            return -1;
+//        if (vectorToFix.hasDependency(dependancyVectorId) && 
+//                vectorOffending.hasDependency(vectorToFixId))
+//            return -1;
 
         return valueBaseCost.getValue();
     }
@@ -69,16 +72,16 @@ public class ResolveById extends DataProcessor<RuleComparable<PatternVector, Rul
             PatternVector dependencyVectorFull = dependencyRule.getFullRuleVectorById(dependencyVectorId);
 
             // Check quickly if counter state has been added already
-            if (vectorToFix.hasDependency(dependencyVectorId))
-                return null;
-            else {
+//            if (vectorToFix.hasDependency(dependencyVectorId))
+//                return null;
+//            else {
                 vectorToFix.addDependency(dependencyVectorId);
                 dependencyVector.addDependency(vectorToFixId);
 
                 vectorToFixFull.addDependency(dependencyVectorId);
                 dependencyVectorFull.addDependency(vectorToFixId);
-            }
-            
+//            }
+
             return ruleToFix;
         } catch (ArrayIndexOutOfBoundsException e) {
             Logger.errorLoggerTrace(ERROR_PREFIX + " Array out of bounds exception.", e);

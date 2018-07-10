@@ -36,7 +36,7 @@ public class LPNConstructor {
     protected String TRANSITION_PREFIX = "T_";
 
     private Double targetScale = 1.0;
-    private Boolean useDelays = false;
+    private Boolean useDelays = true;
 
     int transitionNumber;
     int placeNumber;
@@ -222,10 +222,13 @@ public class LPNConstructor {
                 syncPlace.addTransitionPreSet(transition);
                 syncPlace.addTransitionPostSet(finalTransition);
                 transition.addPlacePostSet(syncPlace);
+                finalTransition.addPlacePreSet(syncPlace);
+                model.addPlace(syncPlace);
             }
 
             place.addTransitionPreSet(finalTransition);
             finalTransition.addPlacePostSet(place);
+            model.addTransition(finalTransition);
         }
 
         return true;
