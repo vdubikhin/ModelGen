@@ -22,11 +22,18 @@ public class TestModelFSM {
 //        signals.put("LinearNoise", ControlType.OUTPUT);
 //        signals.put("Linear", ControlType.INPUT);
 
-        String fileName = "Memristor4.csv";
-//        String fileName = "VoltageDrop1.csv";
-        signals.put("VoltageDrop", ControlType.INPUT);
+//        String fileName = "flipflop3.csv";
+//        
+//        signals.put("clk", ControlType.INPUT);
+//        signals.put("in", ControlType.INPUT);
+//        signals.put("out", ControlType.OUTPUT);
+        
+//        String fileName = "Memristor4.csv";
+        String fileName = "VoltageDrop1.csv";
+        signals.put("VoltageDrop", ControlType.OUTPUT);
         signals.put("InputVoltage", ControlType.INPUT);
-        signals.put("Resistance", ControlType.OUTPUT);
+//        signals.put("ResistanceInput", ControlType.INPUT);
+        signals.put("Resistance", ControlType.INPUT);
 
 //        signals.put("VoltageDrop", ControlType.OUTPUT);
 //        signals.put("InputVoltage", ControlType.INPUT);

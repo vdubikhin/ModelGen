@@ -171,6 +171,11 @@ public class PatternVector extends HashMap<Integer, StateVector> implements Comp
             IStateWrapper(IState inputState) {state = inputState;}
 
             @Override
+            public int hashCode() {
+                return state.hashCode();
+            }
+
+            @Override
             public boolean equals(Object objectCmp) {
                 if (!(objectCmp instanceof IStateWrapper)) return false;
                 IState stateCmp = ((IStateWrapper) objectCmp).state;

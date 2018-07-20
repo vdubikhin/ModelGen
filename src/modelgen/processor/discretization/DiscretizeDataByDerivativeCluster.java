@@ -22,7 +22,7 @@ import modelgen.shared.Util;
 public class DiscretizeDataByDerivativeCluster extends DiscretizeDataByStabilityCluster {
     final private Integer VALUE_BASE_COST = 3;
     final private Integer MAX_UNIQUE_STATES = 100;
-    final private double VAR_COEFF = 0.0001;
+    final private double VAR_COEFF = 0.5;
 
     private RawDataChunk derivData;
 

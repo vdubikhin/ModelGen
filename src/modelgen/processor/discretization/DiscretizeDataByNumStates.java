@@ -177,7 +177,7 @@ public class DiscretizeDataByNumStates extends ADataDiscretizer implements IData
             if (monotonicChunks != null && !monotonicChunks.isEmpty())
                 return 1;
             
-            if (inputData == null || inputData.isEmpty())
+            if (inputData == null || inputData.isEmpty() || inputData.size() == 1)
                 return -1;
 
             if (numStates.getValue() < 1)

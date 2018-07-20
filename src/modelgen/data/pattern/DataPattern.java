@@ -79,7 +79,7 @@ public class DataPattern implements Mergeable<DataPattern>{
         Double output = outputStateTime - vectorEndTime;
 
         if (output < 0)
-            return null;
+            return 0.0;
 
         return output;
     }

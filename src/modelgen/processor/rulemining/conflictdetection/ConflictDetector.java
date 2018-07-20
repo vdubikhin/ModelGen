@@ -70,6 +70,10 @@ public class ConflictDetector {
                 List<RuleFSMVector> dataRules = signalsDataRules.get(signal);
 
                 for (RuleConflictType conflictType: RuleConflictType.values()) {
+                    //TODO: debug
+//                    if (conflictType == RuleConflictType.RuleVsFullPattern)
+//                        continue;
+                    
                     for (int i = 0; i < dataRules.size(); i++) {
                         RuleFSMVector ruleA = dataRules.get(i);
                         for (int j = 0; j < dataRules.size(); j++) {

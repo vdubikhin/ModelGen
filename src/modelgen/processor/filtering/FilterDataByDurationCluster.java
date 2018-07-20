@@ -30,7 +30,7 @@ public class FilterDataByDurationCluster extends FilterDataBase implements IData
     final private static String PD_RELATIVE_THRESHOLD = PD_PREFIX + "RELATIVE_THRESHOLD";
 
     final private Integer VALUE_BASE_COST = 5;
-    final private Double DISTRIBUTION_PEAK = 0.6;
+    final private Double DISTRIBUTION_PEAK = 0.25;
     final private Double RELATIVE_THRESHOLD = 0.2;
 
     protected RawDataChunkGrouped inputData;

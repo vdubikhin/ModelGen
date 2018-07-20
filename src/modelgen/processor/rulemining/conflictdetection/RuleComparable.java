@@ -39,4 +39,6 @@ public interface RuleComparable< T extends ComplexComparable<T>, V extends RuleC
     Integer getScaleFactor();
 
     void setScaleFactor(Double scale);
+
+    Entry<Double, Double> getTimeStampById(Integer id);
 }

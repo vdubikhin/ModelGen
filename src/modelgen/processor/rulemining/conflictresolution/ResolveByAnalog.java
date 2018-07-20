@@ -1,5 +1,6 @@
 package modelgen.processor.rulemining.conflictresolution;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -7,11 +8,14 @@ import modelgen.data.ControlType;
 import modelgen.data.pattern.PatternVector;
 import modelgen.data.pattern.StateVector;
 import modelgen.data.property.Properties;
+import modelgen.data.property.PropertyInteger;
 import modelgen.data.property.PropertyManager;
 import modelgen.data.raw.RawDataChunk;
+import modelgen.data.raw.RawDataPoint;
 import modelgen.data.stage.StageDataRaw;
 import modelgen.data.stage.StageDataState;
 import modelgen.data.state.IState;
+import modelgen.data.state.StateThresholds;
 import modelgen.processor.DataProcessor;
 import modelgen.processor.IDataProcessor;
 import modelgen.processor.discretization.DiscretizeDataByNumStates;
@@ -22,7 +26,7 @@ import modelgen.shared.Logger;
 
 public class ResolveByAnalog extends DataProcessor<RuleComparable<PatternVector, RuleFSMVector>>
                       implements IDataProcessor<RuleComparable<PatternVector, RuleFSMVector>> {
-    final private Integer RESOLVE_COST = 1;
+    final private Integer RESOLVE_COST = 2;
 
     private ConflictComparable<PatternVector, RuleFSMVector> conflictToResolve;
 
@@ -102,7 +106,26 @@ public class ResolveByAnalog extends DataProcessor<RuleComparable<PatternVector,
 
                 //Discretize data not contained in state vector and add it to full vector
                 if (stateVector == null || !stateVector.containsKey(signal)) {
-                    StageDataRaw dataRaw = new StageDataRaw(curAnalogChunk, signal, ControlType.INPUT);
+                    //Separate analog data into two groups
+                    //One before output state
+                    //Another after output state
+                    RawDataChunk dataChunkPre = new RawDataChunk();
+                    RawDataChunk dataChunkPost = new RawDataChunk();
+
+                    Double stateStart = ruleToFix.getTimeStampById(vectorId).getKey();
+
+                    for (RawDataPoint curPoint: curAnalogChunk) {
+                        if (curPoint.getTime() <= stateStart)
+                            dataChunkPre.add(curPoint);
+                        else
+                            dataChunkPost.add(curPoint);
+                    }
+
+                    StateThresholds finalState = rawDataToState(signal, dataChunkPost);
+
+                    StageDataRaw dataRaw = new StageDataRaw(dataChunkPre, signal, ControlType.INPUT);
+                    List<IState> combinedStates = new ArrayList<>();
+
                     IDataProcessor<StageDataState> discretizationProcessor = new DiscretizeDataByNumStates(dataRaw);
                     if (discretizationProcessor.processCost() > 0) {
                         StageDataState states = discretizationProcessor.processData();
@@ -110,13 +133,16 @@ public class ResolveByAnalog extends DataProcessor<RuleComparable<PatternVector,
                         if (states == null)
                             return null;
                         //TODO: Magic
-                        List<IState> combinedStates = states.getStates();
-                        combinedStates.addAll(vectorFull.getStates());
-                        vectorFull = new PatternVector(combinedStates, vectorFull.getId());
-                        ruleToFix.setFullRuleVectorById(vectorId, vectorFull);
-                        ruleToFix.resetRuleVectorById(vectorId);
-                        return ruleToFix;
+                        combinedStates.addAll(states.getStates());
                     }
+
+                    combinedStates.add(finalState);
+                    combinedStates.addAll(vectorFull.getStates());
+                    vectorFull = new PatternVector(combinedStates, vectorFull.getId());
+                    ruleToFix.setFullRuleVectorById(vectorId, vectorFull);
+                    ruleToFix.resetRuleVectorById(vectorId);
+
+                    return ruleToFix;
                 }
             }
 
@@ -128,4 +154,20 @@ public class ResolveByAnalog extends DataProcessor<RuleComparable<PatternVector,
         return null;
     }
 
+
+    private StateThresholds rawDataToState(String signal, RawDataChunk rawData) 
+            throws ArrayIndexOutOfBoundsException, NullPointerException{
+        Double startTime = rawData.get(0).getTime();
+        Double endTime = rawData.get(rawData.size() - 1).getTime();
+
+        Double minValue = rawData.stream()
+                .min( (p1,p2) -> (Double.compare(p1.getValue(), p2.getValue())) )
+                .get().getValue();
+
+        Double maxValue = rawData.stream()
+                .max( (p1,p2) -> (Double.compare(p1.getValue(), p2.getValue())) )
+                .get().getValue();
+
+        return new StateThresholds(signal, startTime, endTime, minValue, maxValue);
+    }
 }

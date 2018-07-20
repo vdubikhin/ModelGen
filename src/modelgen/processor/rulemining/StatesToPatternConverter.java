@@ -72,10 +72,12 @@ public class StatesToPatternConverter {
                         if (signal.getStates() != null)
                             patternStates.addAll(getStatesInWindow(startTime, endTime, signal.getStates()));
                         else
-                            patternRawData.put(signal.getName(), getPointsInWindow(startTime, endTime, signal.getData()));
+                            patternRawData.put(signal.getName(), getPointsInWindow(
+                                    curOutputState.getTimeStamp().getKey(),
+                                    curOutputState.getTimeStamp().getValue(), signal.getData()));
                     }
 
-                    //Add output state
+                    //Add previous output state
                     patternStates.add(prevState);
 
                     //Prepend previous state

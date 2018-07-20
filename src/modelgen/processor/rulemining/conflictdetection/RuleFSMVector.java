@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import modelgen.data.complex.Mergeable;
@@ -260,8 +261,8 @@ public class RuleFSMVector implements RuleComparable<PatternVector, RuleFSMVecto
                     }
                 }
 
-                Double delayLow = curPattern.getDelayLow();
-                Double delayHigh= curPattern.getDelayHigh();
+                Double delayLow  = curPattern.getDelayLow();
+                Double delayHigh = curPattern.getDelayHigh();
 
                 scaleFactor = Math.min(Util.base10Power(delayLow), scaleFactor);
                 scaleFactor = Math.min(Util.base10Power(delayHigh), scaleFactor);
@@ -277,13 +278,25 @@ public class RuleFSMVector implements RuleComparable<PatternVector, RuleFSMVecto
     }
 
     @Override
+    public Entry<Double, Double> getTimeStampById(Integer id) {
+        try {
+            return outputPatterns.get(id).getOutputState().getTimeStamp();
+        } catch (NullPointerException e) {
+            Logger.errorLoggerTrace(ERROR_PREFIX + " Null pointer exception.", e);
+        } catch (ArrayIndexOutOfBoundsException e) {
+            Logger.errorLoggerTrace(ERROR_PREFIX + " Array out of bounds exception.", e);
+        }
+        return null;
+    }
+
+    @Override
     public Map.Entry<Integer, Integer> getDelayById(Integer id) {
         try {
 //            Integer delayLow = (int) (outputPatterns.get(id).getDelayLow() * scaleCoeff);
 //            Integer delayHigh = (int) (outputPatterns.get(id).getDelayHigh() * scaleCoeff);
 
-            Integer delayLow = outputPatterns.get(id).getDelayLow().intValue();
-            Integer delayHigh =outputPatterns.get(id).getDelayHigh().intValue();
+            Integer delayLow  = outputPatterns.get(id).getDelayLow().intValue();
+            Integer delayHigh = outputPatterns.get(id).getDelayHigh().intValue();
 
             if (delayLow == null || delayHigh == null)
                 return null;
